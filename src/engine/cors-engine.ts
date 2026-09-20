@@ -15,6 +15,7 @@ import type {
   DiagnosticResult,
   EngineError,
   EngineStatus,
+  ExportedConfig,
   NetworkActivityEntry,
   NetworkAdapter,
   NetworkExtensionEngine,
@@ -306,6 +307,45 @@ export class CorsEngine implements NetworkExtensionEngine {
         await this.reinstall();
       }
       return { ...this._settings };
+    });
+  }
+
+  // --- backup & restore ----------------------------------------------------
+
+  async exportConfig(): Promise<ExportedConfig> {
+    return {
+      schema: 'cors-enabler/v1',
+      exportedAt: Date.now(),
+      enabled: this._enabled,
+      rules: [...this._rules],
+      settings: { ...this._settings },
+    };
+  }
+
+  async importConfig(
+    config: ExportedConfig,
+  ): Promise<{ rules: CorsRule[]; settings: CorsSettings }> {
+    return this.enqueue(async () => {
+      if (!config || config.schema !== 'cors-enabler/v1') {
+        throw {
+          code: 'VALIDATION_FAILED',
+          message: `Unsupported config schema: ${config?.schema}`,
+          userMessage: 'That file is not a valid CORS Enabler configuration.',
+          recoverable: true,
+        };
+      }
+      this._settings = { ...this._settings, ...config.settings };
+      this._rules = Array.isArray(config.rules) ? config.rules : [];
+      await this.deps.persistence.saveSettings(this._settings);
+      await this.deps.persistence.saveRules(this._rules);
+      rootLogger.configure({
+        level: this._settings.logLevel,
+        developerMode: this._settings.developerMode,
+      });
+      if (this._enabled) {
+        await this.reinstall();
+      }
+      return { rules: [...this._rules], settings: { ...this._settings } };
     });
   }
 

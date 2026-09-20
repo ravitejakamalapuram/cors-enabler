@@ -14,17 +14,17 @@ yarn install          # or npm install
 
 ## Common commands
 
-| Command | What it does |
-| --- | --- |
-| `yarn dev` | Vite + CRXJS dev server with HMR. Load the generated `dist/` (or the dev build dir CRXJS prints) as an unpacked extension. |
-| `yarn build` | `tsc --noEmit` then `vite build` → `dist/`. |
-| `yarn build:only` | Skip type-check, just build. |
-| `yarn test` | Run Vitest unit tests once. |
-| `yarn test:watch` | Vitest watch mode. |
-| `yarn test:coverage` | Coverage report for `engine/` and `shared/`. |
-| `yarn typecheck` | Strict TypeScript check. |
-| `yarn lint` / `yarn lint:fix` | ESLint. |
-| `yarn format` / `yarn format:check` | Prettier. |
+| Command                             | What it does                                                                                                               |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `yarn dev`                          | Vite + CRXJS dev server with HMR. Load the generated `dist/` (or the dev build dir CRXJS prints) as an unpacked extension. |
+| `yarn build`                        | `tsc --noEmit` then `vite build` → `dist/`.                                                                                |
+| `yarn build:only`                   | Skip type-check, just build.                                                                                               |
+| `yarn test`                         | Run Vitest unit tests once.                                                                                                |
+| `yarn test:watch`                   | Vitest watch mode.                                                                                                         |
+| `yarn test:coverage`                | Coverage report for `engine/` and `shared/`.                                                                               |
+| `yarn typecheck`                    | Strict TypeScript check.                                                                                                   |
+| `yarn lint` / `yarn lint:fix`       | ESLint.                                                                                                                    |
+| `yarn format` / `yarn format:check` | Prettier.                                                                                                                  |
 
 ## Loading in Chrome
 
@@ -69,6 +69,6 @@ patterns can be reused wholesale — see ARCHITECTURE.md §"Why this shape?".
 - Turn on **Settings → Developer mode** for verbose logs, installed rule ids and
   Chrome API errors.
 - Inspect the service worker from `chrome://extensions` → the extension →
-  *service worker* link.
+  _service worker_ link.
 - Use **Diagnostics** to reason about a specific failing request.
 - Use **Network Activity** to see which rules actually matched.

@@ -1,6 +1,8 @@
+import { useRef } from 'react';
 import { Switch } from '@/ui/components/Switch';
+import { Download, Upload } from 'lucide-react';
 import type { OptionsController } from '../hooks/useOptions';
-import type { LogLevel } from '@/engine/types';
+import type { ExportedConfig, LogLevel } from '@/engine/types';
 
 const CAPABILITIES: { status: '✓' | '~' | '✗'; cls: string; text: string }[] = [
   {
@@ -52,7 +54,34 @@ const CAPABILITIES: { status: '✓' | '~' | '✗'; cls: string; text: string }[]
 
 export function SettingsPanel({ ctrl }: { ctrl: OptionsController }): React.JSX.Element {
   const s = ctrl.settings;
+  const fileRef = useRef<HTMLInputElement>(null);
   if (!s) return <div className="empty">Loading settings…</div>;
+
+  const doExport = async (): Promise<void> => {
+    const cfg = await ctrl.exportConfig();
+    if (!cfg) return;
+    const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cors-enabler-config-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const doImport = async (file: File): Promise<void> => {
+    try {
+      const cfg = JSON.parse(await file.text()) as ExportedConfig;
+      await ctrl.importConfig(cfg);
+    } catch {
+      ctrl.setError({
+        code: 'VALIDATION_FAILED',
+        message: 'Invalid JSON',
+        userMessage: 'That file could not be parsed as a valid configuration.',
+        recoverable: true,
+      });
+    }
+  };
 
   return (
     <div className="panel" data-testid="settings-panel">
@@ -150,6 +179,40 @@ export function SettingsPanel({ ctrl }: { ctrl: OptionsController }): React.JSX.
             onChange={(v) => ctrl.updateSettings({ captureNetworkActivity: v })}
             label="Capture activity"
             testid="set-capture-switch"
+          />
+        </div>
+      </div>
+
+      <div className="card card-pad">
+        <div className="card-title" style={{ marginBottom: 6 }}>
+          Backup &amp; restore
+        </div>
+        <p className="muted" style={{ margin: '0 0 14px', lineHeight: 1.5 }}>
+          Export your rules and settings to a JSON file, or import a saved configuration. Nothing is
+          sent anywhere — this is a local file.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn" onClick={doExport} data-testid="export-config-btn">
+            <Download size={14} /> Export config
+          </button>
+          <button
+            className="btn"
+            onClick={() => fileRef.current?.click()}
+            data-testid="import-config-btn"
+          >
+            <Upload size={14} /> Import config
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            data-testid="import-config-input"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void doImport(f);
+              e.target.value = '';
+            }}
           />
         </div>
       </div>

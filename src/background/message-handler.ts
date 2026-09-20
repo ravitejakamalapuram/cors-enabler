@@ -64,6 +64,10 @@ async function dispatch(engine: CorsEngine, message: ExtensionMessage): Promise<
       return engine.getActivity();
     case 'CORS_CLEAR_ACTIVITY':
       return engine.clearActivity();
+    case 'CORS_EXPORT_CONFIG':
+      return engine.exportConfig();
+    case 'CORS_IMPORT_CONFIG':
+      return engine.importConfig(message.payload);
     default: {
       const exhaustive: never = message;
       throw {

@@ -34,12 +34,12 @@ leave enabled during normal browsing. The extension therefore:
 
 ## Permissions (least privilege)
 
-| Permission | Justification |
-| --- | --- |
-| `storage` | Persist enabled state, rules, presets and settings locally. |
-| `declarativeNetRequest` | The modern, privacy-preserving replacement for MV2 blocking `webRequest`. Rules are declarative and evaluated by the browser; the extension never inspects individual request payloads. |
-| `declarativeNetRequestFeedback` | Enables `onRuleMatchedDebug` for the Network Activity view. Chrome only fires this for **unpacked / developer-mode** extensions, which matches the audience. |
-| `host_permissions: <all_urls>` | **Modifying response headers requires host access to the request URL.** The headline "Enable CORS" feature targets *arbitrary* development APIs whose hosts aren't known in advance, so broad host access is required for it to work at all. |
+| Permission                      | Justification                                                                                                                                                                                                                                |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                       | Persist enabled state, rules, presets and settings locally.                                                                                                                                                                                  |
+| `declarativeNetRequest`         | The modern, privacy-preserving replacement for MV2 blocking `webRequest`. Rules are declarative and evaluated by the browser; the extension never inspects individual request payloads.                                                      |
+| `declarativeNetRequestFeedback` | Enables `onRuleMatchedDebug` for the Network Activity view. Chrome only fires this for **unpacked / developer-mode** extensions, which matches the audience.                                                                                 |
+| `host_permissions: <all_urls>`  | **Modifying response headers requires host access to the request URL.** The headline "Enable CORS" feature targets _arbitrary_ development APIs whose hosts aren't known in advance, so broad host access is required for it to work at all. |
 
 ### Reducing the host footprint
 
@@ -73,11 +73,11 @@ than silently executed.
 
 ## Data handling summary
 
-| Data | Where it lives | Leaves the browser? |
-| --- | --- | --- |
-| Enabled state, rules, settings | `chrome.storage.local` | No |
-| Network activity (dev builds) | In-memory ring buffer in the service worker | No |
-| Cookies / tokens / credentials | Never read or stored | No |
+| Data                           | Where it lives                              | Leaves the browser? |
+| ------------------------------ | ------------------------------------------- | ------------------- |
+| Enabled state, rules, settings | `chrome.storage.local`                      | No                  |
+| Network activity (dev builds)  | In-memory ring buffer in the service worker | No                  |
+| Cookies / tokens / credentials | Never read or stored                        | No                  |
 
 ## Reporting
 

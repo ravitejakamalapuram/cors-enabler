@@ -165,6 +165,15 @@ export interface Preset {
   credentials: boolean;
 }
 
+/** Serialisable snapshot of the extension configuration for backup/restore. */
+export interface ExportedConfig {
+  schema: 'cors-enabler/v1';
+  exportedAt: number;
+  enabled: boolean;
+  rules: CorsRule[];
+  settings: CorsSettings;
+}
+
 /** A single header mutation, mirrors chrome.declarativeNetRequest.ModifyHeaderInfo. */
 export interface HeaderSpec {
   header: string;

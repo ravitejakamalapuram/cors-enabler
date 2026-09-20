@@ -8,14 +8,14 @@ documented as repeatable manual/Playwright procedures.
 
 Located in `src/tests/unit/`. 57 tests covering the pure engine:
 
-| Suite | Covers |
-| --- | --- |
-| `domain-matcher.test.ts` | Origin/host normalization, `urlFilter` generation, wildcard/subdomain and host:port matching. |
-| `cors-validator.test.ts` | CORS semantics: **rejects `*` + credentials**, rejects multi-origin credentialed, invalid origin/domain, origin resolution. |
-| `rule-builder.test.ts` | Response-header generation for credentialed vs non-credentialed, `Vary: Origin`, PNA, explicit overrides. |
-| `rule-manager.test.ts` | Rule CRUD immutability, duplicate/toggle, effective-rule calc (global + user), adapter delegation. |
-| `state-manager.test.ts` | Full state-transition table, invalid transitions, `enable→disable→enable`. |
-| `network-adapter.test.ts` | `CorsRule` → DNR rule conversion, global vs per-domain expansion, priorities, credentialed headers. |
+| Suite                     | Covers                                                                                                                      |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `domain-matcher.test.ts`  | Origin/host normalization, `urlFilter` generation, wildcard/subdomain and host:port matching.                               |
+| `cors-validator.test.ts`  | CORS semantics: **rejects `*` + credentials**, rejects multi-origin credentialed, invalid origin/domain, origin resolution. |
+| `rule-builder.test.ts`    | Response-header generation for credentialed vs non-credentialed, `Vary: Origin`, PNA, explicit overrides.                   |
+| `rule-manager.test.ts`    | Rule CRUD immutability, duplicate/toggle, effective-rule calc (global + user), adapter delegation.                          |
+| `state-manager.test.ts`   | Full state-transition table, invalid transitions, `enable→disable→enable`.                                                  |
+| `network-adapter.test.ts` | `CorsRule` → DNR rule conversion, global vs per-domain expansion, priorities, credentialed headers.                         |
 
 ```bash
 yarn test            # run once
@@ -54,27 +54,29 @@ http
 From a page on `http://localhost:3000`, run in the console:
 
 ```js
-fetch('http://localhost:4000/data').then((r) => r.json()).then(console.log);
+fetch('http://localhost:4000/data')
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 ### Test matrix (spec §30)
 
-| # | Scenario | Expected with extension **disabled** | Expected with extension **enabled** |
-| --- | --- | --- | --- |
-| 1 | Simple GET | Blocked by CORS | Succeeds |
-| 2 | Extension disabled | Blocked | — |
-| 3 | Extension enabled | — | Succeeds |
-| 4 | GET | Blocked | Succeeds |
-| 5 | POST JSON | Blocked (preflight) | Succeeds |
-| 6 | `Authorization` header | Blocked (preflight) | Succeeds |
-| 7 | OPTIONS preflight | Blocked | Succeeds **if** server returns 2xx for OPTIONS (see limitation) |
-| 8 | Credentials (`credentials:'include'`) | Blocked | Succeeds only in **credentials mode** with a specific origin |
-| 9 | Multiple origins | Blocked | Each needs its own credentialed rule (Chrome can't echo Origin) |
-| 10 | Extension restart | — | Rules re-installed on `onStartup`/`onInstalled` |
-| 11 | Chrome restart | — | State persists via `chrome.storage.local`; rules restored |
-| 12 | Enable → Disable → Enable | — | No stale rules; serialized queue prevents corruption |
-| 13 | Multiple tabs | — | Rules are global to the profile; all tabs benefit |
-| 14 | Multiple API domains | — | Add domains to a rule or use the global rule |
+| #   | Scenario                              | Expected with extension **disabled** | Expected with extension **enabled**                             |
+| --- | ------------------------------------- | ------------------------------------ | --------------------------------------------------------------- |
+| 1   | Simple GET                            | Blocked by CORS                      | Succeeds                                                        |
+| 2   | Extension disabled                    | Blocked                              | —                                                               |
+| 3   | Extension enabled                     | —                                    | Succeeds                                                        |
+| 4   | GET                                   | Blocked                              | Succeeds                                                        |
+| 5   | POST JSON                             | Blocked (preflight)                  | Succeeds                                                        |
+| 6   | `Authorization` header                | Blocked (preflight)                  | Succeeds                                                        |
+| 7   | OPTIONS preflight                     | Blocked                              | Succeeds **if** server returns 2xx for OPTIONS (see limitation) |
+| 8   | Credentials (`credentials:'include'`) | Blocked                              | Succeeds only in **credentials mode** with a specific origin    |
+| 9   | Multiple origins                      | Blocked                              | Each needs its own credentialed rule (Chrome can't echo Origin) |
+| 10  | Extension restart                     | —                                    | Rules re-installed on `onStartup`/`onInstalled`                 |
+| 11  | Chrome restart                        | —                                    | State persists via `chrome.storage.local`; rules restored       |
+| 12  | Enable → Disable → Enable             | —                                    | No stale rules; serialized queue prevents corruption            |
+| 13  | Multiple tabs                         | —                                    | Rules are global to the profile; all tabs benefit               |
+| 14  | Multiple API domains                  | —                                    | Add domains to a rule or use the global rule                    |
 
 Verify #10–12 by checking `chrome.declarativeNetRequest.getDynamicRules()` in the
 service-worker console before/after each action, and the **Status** page's
@@ -93,10 +95,7 @@ import path from 'node:path';
 const pathToExtension = path.resolve('dist');
 const ctx = await chromium.launchPersistentContext('', {
   headless: false,
-  args: [
-    `--disable-extensions-except=${pathToExtension}`,
-    `--load-extension=${pathToExtension}`,
-  ],
+  args: [`--disable-extensions-except=${pathToExtension}`, `--load-extension=${pathToExtension}`],
 });
 
 // 1. Get the service worker to drive the engine:

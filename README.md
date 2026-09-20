@@ -10,7 +10,7 @@ engine with real diagnostics.
 > development APIs, and honestly surfaces what the browser will and will not let
 > an extension do.
 
-![status](https://img.shields.io/badge/Manifest-V3-34d399) ![tests](https://img.shields.io/badge/unit%20tests-57%20passing-34d399)
+![status](https://img.shields.io/badge/Manifest-V3-34d399) ![unit](https://img.shields.io/badge/unit%20tests-65%20passing-34d399) ![e2e](https://img.shields.io/badge/real--Chrome%20E2E-passing-34d399)
 
 ---
 
@@ -40,6 +40,7 @@ API → response → CORS Engine (adds Access-Control-* headers) → Browser →
 - **Diagnostics engine**: simulate a request and see exactly what will happen —
   including browser-enforced limitations, instead of a green tick that lies.
 - **Network Activity**: real `onRuleMatchedDebug` data for unpacked/dev builds.
+- **Backup & restore**: export/import your rules + settings as a local JSON file.
 - **Reusable engine**: the CORS logic is fully decoupled from React.
 
 ## Install (Load unpacked)
@@ -71,36 +72,36 @@ Requires **Chrome 116+**.
 
 ## Permissions
 
-| Permission | Why |
-| --- | --- |
-| `storage` | Persist enabled state, rules and settings locally. Nothing leaves the browser. |
-| `declarativeNetRequest` | Install dynamic rules that add CORS response headers. Chrome evaluates rules internally — the request payload is never exposed to the extension. |
-| `declarativeNetRequestFeedback` | Report which rules matched (Network Activity). Functional for unpacked/dev builds only. |
-| `host_permissions: <all_urls>` | Modifying **response** headers requires host access to the request URL. The global "Enable CORS" feature targets arbitrary dev APIs, so broad host access is required. See [SECURITY.md](./SECURITY.md). |
+| Permission                      | Why                                                                                                                                                                                                      |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                       | Persist enabled state, rules and settings locally. Nothing leaves the browser.                                                                                                                           |
+| `declarativeNetRequest`         | Install dynamic rules that add CORS response headers. Chrome evaluates rules internally — the request payload is never exposed to the extension.                                                         |
+| `declarativeNetRequestFeedback` | Report which rules matched (Network Activity). Functional for unpacked/dev builds only.                                                                                                                  |
+| `host_permissions: <all_urls>`  | Modifying **response** headers requires host access to the request URL. The global "Enable CORS" feature targets arbitrary dev APIs, so broad host access is required. See [SECURITY.md](./SECURITY.md). |
 
 ## What this extension can and cannot do
 
-| | Capability |
-| --- | --- |
-| ✓ | Add/override CORS response headers (ACAO, ACAM, ACAH, ACEH, ACAC). |
-| ✓ | Apply headers to preflight (OPTIONS) responses returned by the server. |
-| ✓ | Correct credentialed CORS (specific origin + `Allow-Credentials: true`). |
-| ✓ | `Access-Control-Allow-Private-Network` for public→localhost requests. |
-| ~ | Multiple simultaneous credentialed origins — one origin per rule only (Chrome cannot echo the request `Origin`). |
-| ~ | Network activity inspection — unpacked/dev builds only, no response status codes. |
-| ✗ | Fabricate a 2xx preflight response when the server errors on OPTIONS. |
-| ✗ | Disable Chromium process-level web security (needs the `--disable-web-security` flag). |
-| ✗ | Read opaque (`no-cors`) response bodies — the browser never exposes them to any extension. |
+|     | Capability                                                                                                       |
+| --- | ---------------------------------------------------------------------------------------------------------------- |
+| ✓   | Add/override CORS response headers (ACAO, ACAM, ACAH, ACEH, ACAC).                                               |
+| ✓   | Apply headers to preflight (OPTIONS) responses returned by the server.                                           |
+| ✓   | Correct credentialed CORS (specific origin + `Allow-Credentials: true`).                                         |
+| ✓   | `Access-Control-Allow-Private-Network` for public→localhost requests.                                            |
+| ~   | Multiple simultaneous credentialed origins — one origin per rule only (Chrome cannot echo the request `Origin`). |
+| ~   | Network activity inspection — unpacked/dev builds only, no response status codes.                                |
+| ✗   | Fabricate a 2xx preflight response when the server errors on OPTIONS.                                            |
+| ✗   | Disable Chromium process-level web security (needs the `--disable-web-security` flag).                           |
+| ✗   | Read opaque (`no-cors`) response bodies — the browser never exposes them to any extension.                       |
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Vite dev server with HMR (CRXJS). |
-| `npm run build` | Type-check + production build → `dist/`. |
-| `npm test` | Run Vitest unit tests. |
-| `npm run lint` | ESLint. |
-| `npm run format` | Prettier write. |
+| Command          | Description                              |
+| ---------------- | ---------------------------------------- |
+| `npm run dev`    | Vite dev server with HMR (CRXJS).        |
+| `npm run build`  | Type-check + production build → `dist/`. |
+| `npm test`       | Run Vitest unit tests.                   |
+| `npm run lint`   | ESLint.                                  |
+| `npm run format` | Prettier write.                          |
 
 ## Documentation
 

@@ -8,6 +8,7 @@ import type {
   DiagnosticRequestInput,
   DiagnosticResult,
   EngineError,
+  ExportedConfig,
   NetworkActivityEntry,
 } from '@/engine/types';
 
@@ -124,6 +125,20 @@ export function useOptions() {
       setActivity((await sendMessage({ type: 'CORS_CLEAR_ACTIVITY' })) as NetworkActivityEntry[]);
     });
 
+  const exportConfig = (): Promise<ExportedConfig | undefined> =>
+    guard(async () => (await sendMessage({ type: 'CORS_EXPORT_CONFIG' })) as ExportedConfig);
+
+  const importConfig = (config: ExportedConfig) =>
+    guard(async () => {
+      const res = (await sendMessage({ type: 'CORS_IMPORT_CONFIG', payload: config })) as {
+        rules: CorsRule[];
+        settings: CorsSettings;
+      };
+      setRules(res.rules);
+      setSettings(res.settings);
+      await refreshStatus();
+    });
+
   return {
     status,
     rules,
@@ -144,6 +159,8 @@ export function useOptions() {
     diagnose,
     refreshActivity,
     clearActivity,
+    exportConfig,
+    importConfig,
     setError,
   };
 }

@@ -6,6 +6,7 @@ import type {
   DiagnosticRequestInput,
   DiagnosticResult,
   EngineError,
+  ExportedConfig,
   NetworkActivityEntry,
 } from '@/engine/types';
 
@@ -30,7 +31,9 @@ export type ExtensionMessage =
   | { type: 'CORS_UPDATE_SETTINGS'; payload: Partial<CorsSettings> }
   | { type: 'CORS_DIAGNOSE'; payload: DiagnosticRequestInput }
   | { type: 'CORS_NETWORK_ACTIVITY' }
-  | { type: 'CORS_CLEAR_ACTIVITY' };
+  | { type: 'CORS_CLEAR_ACTIVITY' }
+  | { type: 'CORS_EXPORT_CONFIG' }
+  | { type: 'CORS_IMPORT_CONFIG'; payload: ExportedConfig };
 
 export type MessageResult<T extends ExtensionMessage['type']> = {
   CORS_ENABLE: CorsStatus;
@@ -49,6 +52,8 @@ export type MessageResult<T extends ExtensionMessage['type']> = {
   CORS_DIAGNOSE: DiagnosticResult;
   CORS_NETWORK_ACTIVITY: NetworkActivityEntry[];
   CORS_CLEAR_ACTIVITY: NetworkActivityEntry[];
+  CORS_EXPORT_CONFIG: ExportedConfig;
+  CORS_IMPORT_CONFIG: { rules: CorsRule[]; settings: CorsSettings };
 }[T];
 
 export interface MessageEnvelope<T> {

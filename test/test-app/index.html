@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CORS Enabler — Test App (localhost:3000)</title>
+    <style>
+      body {
+        font-family: ui-monospace, monospace;
+        background: #0a0e13;
+        color: #e6edf3;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #232d3a;
+      }
+      button {
+        background: #161d26;
+        color: #e6edf3;
+        border: 1px solid #31404f;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        min-width: 190px;
+        text-align: left;
+      }
+      .result {
+        font-weight: 700;
+      }
+      .ok {
+        color: #34d399;
+      }
+      .fail {
+        color: #f87171;
+      }
+      .muted {
+        color: #97a4b4;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CORS Enabler — Test App</h1>
+    <p class="muted">
+      Frontend origin: <span id="origin"></span> · API:
+      <span id="api"></span>. With the extension <b>disabled</b> these cross-origin
+      calls are blocked by the browser; with it <b>enabled</b> they succeed.
+    </p>
+
+    <div class="row">
+      <button data-testid="run-get" onclick="runGet()">GET /data</button>
+      <span class="result" data-testid="result-get">—</span>
+    </div>
+    <div class="row">
+      <button data-testid="run-post" onclick="runPost()">POST /echo (JSON)</button>
+      <span class="result" data-testid="result-post">—</span>
+    </div>
+    <div class="row">
+      <button data-testid="run-auth" onclick="runAuth()">GET /secure (Authorization)</button>
+      <span class="result" data-testid="result-auth">—</span>
+    </div>
+    <div class="row">
+      <button data-testid="run-cred" onclick="runCred()">GET /data (credentials)</button>
+      <span class="result" data-testid="result-cred">—</span>
+    </div>
+
+    <script>
+      const API = new URLSearchParams(location.search).get('api') || 'http://localhost:4000';
+      document.getElementById('origin').textContent = location.origin;
+      document.getElementById('api').textContent = API;
+
+      function set(id, ok, detail) {
+        const el = document.querySelector(`[data-testid="${id}"]`);
+        el.textContent = ok ? 'success' : 'blocked';
+        el.className = 'result ' + (ok ? 'ok' : 'fail');
+        el.title = detail || '';
+      }
+
+      async function runGet() {
+        try {
+          const r = await fetch(`${API}/data`);
+          const j = await r.json();
+          set('result-get', j.ok === true);
+        } catch (e) {
+          set('result-get', false, String(e));
+        }
+      }
+      async function runPost() {
+        try {
+          const r = await fetch(`${API}/echo`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hello: 'world' }),
+          });
+          const j = await r.json();
+          set('result-post', j.ok === true);
+        } catch (e) {
+          set('result-post', false, String(e));
+        }
+      }
+      async function runAuth() {
+        try {
+          const r = await fetch(`${API}/secure`, { headers: { Authorization: 'Bearer test-token' } });
+          const j = await r.json();
+          set('result-auth', j.ok === true);
+        } catch (e) {
+          set('result-auth', false, String(e));
+        }
+      }
+      async function runCred() {
+        try {
+          const r = await fetch(`${API}/data`, { credentials: 'include' });
+          const j = await r.json();
+          set('result-cred', j.ok === true);
+        } catch (e) {
+          set('result-cred', false, String(e));
+        }
+      }
+    </script>
+  </body>
+</html>

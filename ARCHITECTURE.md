@@ -43,36 +43,41 @@ networking APIs directly — everything flows through a reusable engine.
 ## Layers
 
 ### `shared/`
+
 Leaf utilities with no engine dependencies at runtime:
+
 - `constants.ts` — storage keys, header names, defaults, DNR id range.
 - `logger.ts` — levelled logger; debug suppressed unless developer mode.
 - `storage.ts` — typed `chrome.storage.local` wrapper.
 - `messages.ts` — the typed message contract + `sendMessage` helper.
 
 ### `engine/`
+
 Framework-agnostic. No React, and `chrome.*` is confined to two files
 (`network-adapter.ts`, and `storage.ts` via the persistence port). Everything
 else is pure and unit-tested.
 
-| File | Responsibility |
-| --- | --- |
-| `types.ts` | All domain types + the `NetworkExtensionEngine` and `NetworkAdapter` contracts. |
-| `domain-matcher.ts` | Origin/host normalization, `urlFilter` generation, matching. |
-| `cors-validator.ts` | Real CORS semantics + Chrome constraints (rejects `*`+credentials, multi-origin credentialed, invalid origins/domains). |
-| `rule-builder.ts` | Turns a `CorsRule` into concrete response-header mutations. |
-| `rule-manager.ts` | Pure rule-list CRUD + effective-rule calculation (global rule + user rules); delegates install to the adapter. |
-| `network-adapter.ts` | The **only** DNR touchpoint. Converts rules → dynamic rules, installs/clears deterministically, verifies. |
-| `state-manager.ts` | Explicit state machine (pure `nextState` + `StateMachine`). |
-| `diagnostics-engine.ts` | Request analysis + network-activity ring buffer. |
-| `cors-engine.ts` | Orchestrator. Serializes operations, persists, exposes the public API. |
-| `presets.ts` | Pure preset data → rule inputs. |
-| `index.ts` | Chrome-backed singleton factory. |
+| File                    | Responsibility                                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `types.ts`              | All domain types + the `NetworkExtensionEngine` and `NetworkAdapter` contracts.                                         |
+| `domain-matcher.ts`     | Origin/host normalization, `urlFilter` generation, matching.                                                            |
+| `cors-validator.ts`     | Real CORS semantics + Chrome constraints (rejects `*`+credentials, multi-origin credentialed, invalid origins/domains). |
+| `rule-builder.ts`       | Turns a `CorsRule` into concrete response-header mutations.                                                             |
+| `rule-manager.ts`       | Pure rule-list CRUD + effective-rule calculation (global rule + user rules); delegates install to the adapter.          |
+| `network-adapter.ts`    | The **only** DNR touchpoint. Converts rules → dynamic rules, installs/clears deterministically, verifies.               |
+| `state-manager.ts`      | Explicit state machine (pure `nextState` + `StateMachine`).                                                             |
+| `diagnostics-engine.ts` | Request analysis + network-activity ring buffer.                                                                        |
+| `cors-engine.ts`        | Orchestrator. Serializes operations, persists, exposes the public API.                                                  |
+| `presets.ts`            | Pure preset data → rule inputs.                                                                                         |
+| `index.ts`              | Chrome-backed singleton factory.                                                                                        |
 
 ### `background/`
+
 The service worker wires the Chrome-backed engine, re-installs rules on
 `onInstalled`/`onStartup` (surviving restarts), and routes typed messages.
 
 ### `popup/` and `options/`
+
 React consumers only. They call `sendMessage(...)` and render status. They never
 import `network-adapter` or call `chrome.declarativeNetRequest`.
 
