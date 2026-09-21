@@ -4,6 +4,8 @@ on:
   push:
     branches: [main, master]
   pull_request:
+    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   quality:
@@ -28,19 +30,11 @@ jobs:
           path: dist
           if-no-files-found: error
 
-  e2e:
-    name: Real-Chrome E2E (Playwright)
+  shared-ci:
+    name: Shared Chrome Extension CI
     needs: quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
-      - run: yarn install --frozen-lockfile
-      - run: yarn build:only
-      - name: Install Playwright Chromium
-        run: yarn test:e2e:install
-      - name: Run E2E under xvfb (extensions need a display)
-        run: xvfb-run -a yarn test:e2e
+    uses: ravitejakamalapuram/.github-workflows-shared/.github/workflows/chrome-extension-ci.yml@v1.1.9
+    with:
+      extension-dir: 'dist'
+      run-lint: false
+      run-unit-tests: false

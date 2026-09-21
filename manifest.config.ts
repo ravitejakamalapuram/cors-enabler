@@ -27,7 +27,7 @@ export default defineManifest({
   manifest_version: 3,
   name: 'CORS Enabler Engine',
   description:
-    'Relax CORS for local development with one click using Chrome\u2019s declarativeNetRequest API. A network rule engine + diagnostics, not a header hack.',
+    'Relax CORS for local web development using DeclarativeNetRequest. A network rule engine with diagnostics for web APIs.',
   version: pkg.version,
   minimum_chrome_version: '116',
   action: {
