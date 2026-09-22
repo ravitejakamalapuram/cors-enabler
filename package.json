@@ -1,6 +1,6 @@
 {
   "name": "cors-enabler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CORS Enabler Engine — a professional Manifest V3 Chrome extension that relaxes CORS for local development using Chrome's declarativeNetRequest API, built on a reusable network engine.",
   "type": "module",
   "license": "MIT",

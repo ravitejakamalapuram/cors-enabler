@@ -1,24 +1,25 @@
 # Chrome Web Store Listing & Publishing Record
 
-*Last Updated: 2026-09-20*
+*Last Updated: 2026-09-22*
 
 ---
 
 ## 1. Extension Information
 - **Name**: CORS Enabler Engine
-- **Extension ID**: `PENDING_REGISTRATION`
-- **Publisher ID**: `PENDING_CONFIGURATION`
-- **Version**: `1.0.0`
+- **Extension ID**: `bfegjbdhenoahnnajgmlkcdkfcjgnjjc`
+- **Publisher ID**: `9637cb78-fa33-49dd-a4cb-91066ff182e3`
+- **Version**: `1.0.1`
 - **Manifest Version**: `MV3`
 - **Language**: `en`
 - **Category**: `Developer Tools`
+- **Status**: `Pending review`
 
 ---
 
 ## 2. Store Listing Copy
 
 ### Short Description (max 132 characters)
-> Instantly toggle CORS relaxation on or off with a single click.
+> Relax CORS for local web development using DeclarativeNetRequest. A network rule engine with diagnostics for web APIs.
 
 ### Detailed Description
 ```markdown
@@ -32,69 +33,34 @@ Key Features:
 - Clean and intuitive interface designed for modern productivity.
 
 How to use:
-1. Open the extension from the Chrome toolbar or side panel.
-2. Load or paste your data to inspect, query, and transform.
-3. Export or copy results instantly.
+1. Open the extension from the Chrome toolbar.
+2. Toggle CORS relaxation or configure custom headers.
+3. Inspect rule match events in the diagnostics view.
 ```
 
 ---
 
 ## 3. Permissions Justifications (Required for Review)
 
-Google review requires specific plain-English justification for each declared permission:
-
 | Permission | Used in Code? | Sample Evidence | Required? | Risk | Plain-English Review Justification |
-| :--- | :---: | :--- | :---: | :---: | :--- |
-| `storage` | Yes | assets/service-worker.ts-CaQCPYF9.js:1 | Yes | LOW | Required to locally persist user settings, configurations, and application state across sessions. |
-| `declarativeNetRequest` | Yes | assets/service-worker.ts-CaQCPYF9.js:1 | Yes | MEDIUM | Applies declarative network modification rules without reading sensitive request bodies. |
-| `declarativeNetRequestFeedback` | No | Declared in manifest | Yes | MEDIUM | Enables chrome.declarativeNetRequestFeedback API functionality. |
-| `host_permissions` | Yes | <all_urls> | Yes | HIGH | Access is required to <all_urls> to support core extension functionality on user-selected web domains. |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `storage` | Yes | Local state | Yes | LOW | Required to locally persist user settings, configurations, and application state across sessions. |
+| `declarativeNetRequest` | Yes | Network rules | Yes | MEDIUM | Applies declarative network modification rules without reading sensitive request bodies. |
+| `declarativeNetRequestFeedback` | Yes | Debug rules | Yes | MEDIUM | Enables chrome.declarativeNetRequestFeedback API functionality for developer diagnostics. |
+| `host_permissions` | Yes | `<all_urls>` | Yes | HIGH | Access is required to arbitrary URLs to allow developers to test and relax CORS restrictions across any development backend. |
 
 ---
 
 ## 4. Privacy & Data Use Disclosure
 
-- **Data Flow**:
-  User Interaction
-  ⬇
-  Extension Frontend (Popup / Side Panel / Content Scripts)
-  ⬇
-  Local Browser Storage (chrome.storage.local / session)
-  ⬇
-  External HTTPS API Endpoints
-
-- **Data Handling Summary**:
-  - **User Preference & Session State**: Collected: Yes | Stored: Local | Purpose: Store application configuration, theme preferences, and local document state.
-  - **Web Page Data & Content**: Collected: No | Stored: No | Purpose: Parse and visualize JSON or user-requested data directly within the browser context.
-  - **Analytics & Telemetry**: Collected: No | Stored: No | Purpose: None collected.
-
-- **Privacy Policy URL**: ACTION REQUIRED: Must provide valid public URL
+- **Privacy Policy URL**: `https://ravitejakamalapuram.github.io/cors-enabler.html`
+- **Data Flow**: Purely local. No user data, browse history, or network request payloads are transmitted to any remote servers.
 
 ---
 
-## 5. Store Assets Checklist
-
-- [x] Extension Icon (128×128 PNG): `icons/icon-128.png`
-- [ ] Primary Screenshot (1280×800 PNG): `chrome-store/assets/screenshots/01-main-screen.png`
-- [ ] Promotional Tile (440×280 PNG): Optional but recommended for featured placement
-- [ ] Marquee Promo (1400×560 PNG): Optional
-
----
-
-## 6. Pre-Publish Checklist
-
-- [x] Manifest V3 compliance verified
-- [x] No `eval()` or remotely hosted code
-- [x] No secrets, private keys, or API tokens in package
-- [x] Distributable archive contains `manifest.json` at root
-- [ ] Extension registered in Chrome Web Store Developer Dashboard
-- [ ] CWS API OAuth credentials configured (`.env`)
-- [ ] Final human confirmation obtained before submission
-
----
-
-## 7. Release History
+## 5. Release History
 
 | Version | Date | Status | Package ZIP | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| `1.0.0` | 2026-09-20 | Draft / Ready | `chrome-store/builds/cors-enabler-engine-v1.0.0.zip` | Automated build & verification passed |
+| `1.0.0` | 2026-09-21 | Rejected | `cors-enabler-v1.0.0.zip` | Rejected under Purple Nickel due to third-party preview privacy URL |
+| `1.0.1` | 2026-09-22 | Pending review | `cors-enabler-v1.0.1.zip` | Fixed privacy policy URL to dedicated GitHub Pages site and resubmitted |
