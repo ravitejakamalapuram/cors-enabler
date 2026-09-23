@@ -90,7 +90,6 @@ credentials.json
 *.key
 .credentials
 chrome-store/
-package-lock.json
 
 # Emergent (AI app builder) scaffolding — not part of the extension
 .emergent/

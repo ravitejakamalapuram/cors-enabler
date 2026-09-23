@@ -16,13 +16,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-      - run: yarn format:check
-      - run: yarn typecheck
-      - run: yarn test
-      - run: yarn build:only
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build:only
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
