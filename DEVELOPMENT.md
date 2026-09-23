@@ -4,7 +4,7 @@
 
 - Node 18+ (project developed on Node 20)
 - Chrome / Chromium **116+**
-- `npm` or `yarn` (the repo is developed with yarn; both work)
+- `npm` (CI uses `npm ci` against the committed `package-lock.json`; `yarn` also works locally)
 
 ## Setup
 

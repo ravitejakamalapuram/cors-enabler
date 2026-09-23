@@ -1,0 +1,35 @@
+{
+  "appName": "CORS Enabler Engine",
+  "appType": "chrome-extension",
+  "repoName": "cors-enabler",
+  "description": "Manifest V3 Chrome extension that relaxes CORS for local development using Chrome's declarativeNetRequest API, with a reusable network rule engine and diagnostics.",
+  "modules": [
+    {
+      "name": "CORS Enabler Engine",
+      "type": "chrome-extension",
+      "path": "dist",
+      "status": "draft",
+      "storeId": "bfegjbdhenoahnnajgmlkcdkfcjgnjjc",
+      "storeUrl": "https://chromewebstore.google.com/detail/bfegjbdhenoahnnajgmlkcdkfcjgnjjc",
+      "developerConsoleUrl": "https://chrome.google.com/webstore/devconsole/9637cb78-fa33-49dd-a4cb-91066ff182e3/bfegjbdhenoahnnajgmlkcdkfcjgnjjc",
+      "buildScript": "npm run build",
+      "artifactPath": "dist",
+      "cwsListing": {
+        "shortDescription": "Relax CORS for local web development using DeclarativeNetRequest. A network rule engine with diagnostics for web APIs.",
+        "detailedDescription": "CORS Enabler Engine\n\nRelax CORS for local development with one click using Chrome's declarativeNetRequest API. A network rule engine + diagnostics, not a header hack.\n\nKey Features:\n- Local-first and private: all data operations run strictly inside your browser.\n- High performance: fast processing for developer workflows.\n- Clean and intuitive interface designed for modern productivity.\n\nHow to use:\n1. Open the extension from the Chrome toolbar.\n2. Toggle CORS relaxation or configure custom headers.\n3. Inspect rule match events in the diagnostics view.",
+        "category": "developer-tools",
+        "singlePurpose": "CORS Enabler Engine lets web developers add CORS response headers to their own development and test APIs so local frontends can call them, without changing production servers.",
+        "privacyPolicyUrl": "https://ravitejakamalapuram.github.io/cors-enabler.html",
+        "remoteCodeUsed": false,
+        "remoteCodeJustification": "The extension does not execute remote code. All scripts are bundled into the extension package at build time.",
+        "dataUsageCertified": true,
+        "permissionJustifications": {
+          "storage": "Required to locally persist user settings, rules, presets and application state across sessions.",
+          "declarativeNetRequest": "Applies declarative rules that add CORS response headers without reading request or response bodies.",
+          "declarativeNetRequestFeedback": "Enables rule-match diagnostics so developers can see which rules matched a request.",
+          "host_permissions": "Modifying response headers requires host access to the request URL; developers target arbitrary development backends."
+        }
+      }
+    }
+  ]
+}
