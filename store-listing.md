@@ -30,7 +30,7 @@ Developer Tools
 English
 
 ## Privacy Policy URL
-https://session-bridge-4.preview.emergentagent.com/privacy
+https://ravitejakamalapuram.github.io/cors-enabler.html
 
 ## Single Purpose
 CORS Enabler Engine relaxes Cross-Origin Resource Sharing (CORS) constraints for local development environments using Chrome's declarativeNetRequest API, enabling developers to test frontend applications against local APIs and microservices without backend code modifications.
