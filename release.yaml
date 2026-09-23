@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ravitejakamalapuram/release-platform/main/schema/release.schema.json
+# Release contract for ravitejakamalapuram/release-platform@v2 (keyless Chrome Web Store publishing).
+app: cors-enabler
+test: npm ci && npm run lint && npm run format:check && npm run typecheck && npm test
+targets:
+  - type: chrome
+    item_id: bfegjbdhenoahnnajgmlkcdkfcjgnjjc
+    build: npm ci && npm run build:only
+    path: dist # Vite + @crxjs output; contains manifest.json after the build
+    node: "20"

@@ -1,41 +1,20 @@
-name: CI
+name: ci
 
 on:
-  push:
-    branches: [main, master]
   pull_request:
-    branches: [main, master]
-  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Lint · Typecheck · Unit tests · Build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm run test
-      - run: npm run build:only
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
-          if-no-files-found: error
-
-  shared-ci:
-    name: Shared Chrome Extension CI
-    needs: quality
-    uses: ravitejakamalapuram/.github-workflows-shared/.github/workflows/chrome-extension-ci.yml@v1
-    with:
-      extension-dir: 'dist'
-      build-command: 'npm run build'
-      run-lint: false
-      run-unit-tests: false
+  ci:
+    permissions:
+      contents: read
+      actions: read   # lets app-ci.yml find which release-platform commit it runs at
+    uses: ravitejakamalapuram/release-platform/.github/workflows/app-ci.yml@v2
+    # Deliberately no `secrets:` and no id-token: PR code never sees credentials.
