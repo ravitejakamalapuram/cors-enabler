@@ -1,0 +1,22 @@
+schema: appforge/permissions@1
+permissions:
+  - permission: storage
+    required: true
+    reason: "Persist the enabled flag, CORS rules, settings, and last-error state (chrome.storage.local)"
+    data_access: [user_settings_local]
+    security_impact: low
+  - permission: declarativeNetRequest
+    required: true
+    reason: "Install/remove dynamic rules that add Access-Control-* response headers on matched requests"
+    data_access: [network_headers]
+    security_impact: medium
+  - permission: declarativeNetRequestFeedback
+    required: true
+    reason: "Subscribe to onRuleMatchedDebug for the Diagnostics/Network Activity view (only fires for unpacked/dev-mode installs)"
+    data_access: [network_rule_match_events]
+    security_impact: low
+  - permission: "<all_urls>"
+    required: true
+    reason: "The CORS-relax rule engine is domain-agnostic by design: it needs host access to whichever API domain a rule targets, which is not known in advance"
+    data_access: [any_site_response_headers]
+    security_impact: high
