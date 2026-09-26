@@ -1,0 +1,34 @@
+# Backfilled by the AppForge factory (P1-07). Fields marked null are not yet knowable —
+# they depend on infrastructure (appforge-control, appforge-edge, Paperclip) not built yet.
+product_id: cors-enabler
+name: CORS Enabler
+description: "Relax CORS for local web development using DeclarativeNetRequest. A network rule engine with diagnostics for web APIs."
+platform: [chrome]
+state: RELEASE_CANDIDATE # app-metadata.json still marks the CWS item status as "draft" (not yet published)
+portfolio_state: NEW
+repository: ravitejakamalapuram/cors-enabler
+owner: founder
+team: []
+architecture: null
+analytics_project: null
+store_ids:
+  cws: bfegjbdhenoahnnajgmlkcdkfcjgnjjc
+monetization:
+  model: free
+permissions: .appforge/permissions.yaml
+data_collection:
+  collected: []
+  stored:
+    local: [chrome_storage_local_rules_and_settings]
+    remote: []
+  transmitted:
+    endpoints: []
+  sensitive: [] # modifies response headers only (Access-Control-*); does not read/modify request or response bodies, and does not read request headers
+  third_party: []
+  retention: { local: indefinite_until_user_clears, remote: none }
+  deletion: "Uninstall clears all local storage"
+security_classification: medium
+release_channel: default
+current_version: "1.0.1"
+kill_policy: null
+scale_policy: null
