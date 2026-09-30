@@ -12,7 +12,8 @@ portfolio_state: NEW
 # internal_track, unpublished] gates whether the clock runs at all.
 # CWS item exists but is still a draft — consistent with
 # state: RELEASE_CANDIDATE and app-metadata.json.
-store_item_status: draft
+# CORRECTED 2026-09-30 (the earlier value was inferred from repo files and was wrong): CWS dashboard 2026-09-30: 'CORS Enabler Engine' v1.0.1 is Published - public (3 users). The dashboard does not show first_published.
+store_item_status: published
 # Correctly null: the item has never been published.
 first_published: null
 repository: ravitejakamalapuram/cors-enabler
