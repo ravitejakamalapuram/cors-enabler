@@ -6,6 +6,15 @@ description: "Relax CORS for local web development using DeclarativeNetRequest. 
 platform: [chrome]
 state: RELEASE_CANDIDATE # app-metadata.json still marks the CWS item status as "draft" (not yet published)
 portfolio_state: NEW
+
+# §22.1 day-30/60/90 clock (APP-41). `first_published` is the
+# clock origin; `store_item_status` ∈ [published, draft, unlisted,
+# internal_track, unpublished] gates whether the clock runs at all.
+# CWS item exists but is still a draft — consistent with
+# state: RELEASE_CANDIDATE and app-metadata.json.
+store_item_status: draft
+# Correctly null: the item has never been published.
+first_published: null
 repository: ravitejakamalapuram/cors-enabler
 owner: founder
 team: []
