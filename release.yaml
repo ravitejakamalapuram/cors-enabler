@@ -8,3 +8,6 @@ targets:
     build: npm ci && npm run build:only
     path: dist # Vite + @crxjs output; contains manifest.json after the build
     node: "20"
+    # Store listing owned by this repo (PR checks validate it; the `listing` workflow opens a
+    # dashboard checklist issue, since the Chrome Web Store API cannot edit listings).
+    listing: chrome-store/store.config.json

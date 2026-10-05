@@ -89,7 +89,8 @@ android-sdk/
 credentials.json
 *.key
 .credentials
-chrome-store/
+chrome-store/*
+!chrome-store/store.config.json
 
 # Emergent (AI app builder) scaffolding — not part of the extension
 .emergent/

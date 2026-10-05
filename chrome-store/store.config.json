@@ -1,0 +1,20 @@
+{
+  "name": "CORS Enabler Engine",
+  "shortDescription": "Fix CORS errors on localhost: adds Access-Control-Allow-Origin headers for dev APIs, with diagnostics that show why a request fails.",
+  "description": "Blocked by \"No 'Access-Control-Allow-Origin' header is present\" while developing? CORS Enabler Engine adds the missing CORS response headers to your development APIs, so your frontend on localhost can call them while the backend is not configured yet.\n\nWHAT MAKES IT DIFFERENT\n• CORS-correct: it never sends the invalid \"Access-Control-Allow-Origin: *\" together with \"Access-Control-Allow-Credentials: true\". When cookies are involved it echoes your specific origin, so credentialed requests actually work.\n• Diagnostics: simulate a request and see which rule matches, which headers will be added, and why the browser would still block it.\n• Honest limits: it uses Chrome's supported declarativeNetRequest API to change response headers. It does not turn off the browser's web security, and the extension tells you when something cannot be fixed from an extension.\n\nFEATURES\n• One-click Enable / Disable from the toolbar.\n• Works with no setup for common localhost development.\n• Per-domain and per-origin rules with priority, duplicate and edit.\n• Presets for React and Vite, Next.js, Angular, and localhost with cookies.\n• Private Network Access header for public pages calling localhost.\n\nHOW TO USE\n1. Click the toolbar icon and press Enable.\n2. Reload your app. Calls to your development API now get the CORS headers.\n3. Open Options to add rules for specific APIs or pick a framework preset.\n4. Turn it off when you are done. Use it for development only, never for browsing.\n\nPRIVACY\nNo analytics, no account, no server. Rules and settings stay in Chrome's local storage, and the extension cannot read request or response bodies.",
+  "category": "Developer Tools",
+  "language": "English",
+  "websiteUrl": "https://github.com/ravitejakamalapuram/cors-enabler",
+  "supportUrl": "https://github.com/ravitejakamalapuram/cors-enabler/issues",
+  "privacyPolicyUrl": "https://ravitejakamalapuram.github.io/cors-enabler.html",
+  "publisherId": "9637cb78-fa33-49dd-a4cb-91066ff182e3",
+  "screenshots": [
+    "../store-assets/01-options-dashboard.png",
+    "../store-assets/02-presets-view.png",
+    "../store-assets/03-rules-view.png"
+  ],
+  "promotionalImages": {
+    "smallTile": "../store-assets/tile-small.png",
+    "marquee": "../store-assets/tile-marquee.png"
+  }
+}
