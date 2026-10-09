@@ -16,7 +16,7 @@ jobs:
     permissions:
       contents: read
       actions: read   # lets app-ci.yml find which release-platform commit it runs at
-    uses: ravitejakamalapuram/release-platform/.github/workflows/app-ci.yml@v2
+    uses: ravitejakamalapuram/release-platform/.github/workflows/app-ci.yml@1b7359affb8ba4a388f4af87348059677237c50a
     # Deliberately no `secrets:` and no id-token: PR code never sees credentials.
 
   # AppForge AI factory checks: permission-diff PR comment, secret scan, OSV dependency
@@ -25,10 +25,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    uses: ravitejakamalapuram/appforge-kit/.github/workflows/checks.yml@main
+    uses: ravitejakamalapuram/appforge-kit/.github/workflows/checks.yml@a8c0baeb39697d43959203f8d1b4a0ae5a148f1f
     with:
       manifest-path: dist/manifest.json
       build-command: npm ci && npm run build:only
+      appforge-kit-ref: a8c0baeb39697d43959203f8d1b4a0ae5a148f1f
 
   # Tell the AppForge factory (Paperclip) about the two events an agent should act on:
   # a PR opened for review, and CI failing on main. Deliberately NOT every push. Needs the
@@ -36,7 +37,7 @@ jobs:
   notify-pr-opened:
     if: github.event_name == 'pull_request' && github.event.action == 'opened' && !github.event.pull_request.draft
     needs: [ci, appforge-checks]
-    uses: ravitejakamalapuram/appforge-kit/.github/workflows/notify-paperclip.yml@main
+    uses: ravitejakamalapuram/appforge-kit/.github/workflows/notify-paperclip.yml@a8c0baeb39697d43959203f8d1b4a0ae5a148f1f
     with:
       event: pr_opened
       product: cors-enabler
@@ -49,7 +50,7 @@ jobs:
   notify-main-failed:
     if: always() && github.event_name == 'push' && (needs.ci.result == 'failure' || needs.appforge-checks.result == 'failure')
     needs: [ci, appforge-checks]
-    uses: ravitejakamalapuram/appforge-kit/.github/workflows/notify-paperclip.yml@main
+    uses: ravitejakamalapuram/appforge-kit/.github/workflows/notify-paperclip.yml@a8c0baeb39697d43959203f8d1b4a0ae5a148f1f
     with:
       event: ci_failed
       product: cors-enabler
