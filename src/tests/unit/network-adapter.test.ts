@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ChromeNetworkAdapter } from '@/engine/network-adapter';
+import { RuleManager } from '@/engine/rule-manager';
 import { DEFAULT_SETTINGS } from '@/shared/constants';
 import type { CorsRule, CorsSettings } from '@/engine/types';
 
@@ -74,5 +75,65 @@ describe('ChromeNetworkAdapter.buildDnrRules', () => {
       settings,
     );
     expect(global[0]!.priority).toBeLessThan(domain[0]!.priority!);
+  });
+});
+
+describe('ChromeNetworkAdapter.buildDnrRules — initiator scoping', () => {
+  const manager = new RuleManager(adapter);
+  const effective = (s: CorsSettings) =>
+    adapter.buildDnrRules(manager.computeEffectiveRules([], s), s);
+
+  it('leaves the global rule unscoped by default (any initiator)', () => {
+    const dnr = effective(settings);
+    expect(dnr).toHaveLength(1);
+    expect(dnr[0]!.condition).not.toHaveProperty('initiatorDomains');
+  });
+
+  it('scopes the global rule to globalInitiatorDomains', () => {
+    const dnr = effective({ ...settings, globalInitiatorDomains: ['localhost', '127.0.0.1'] });
+    expect(dnr).toHaveLength(1);
+    expect(dnr[0]!.condition.initiatorDomains).toEqual(['localhost', '127.0.0.1']);
+    expect(dnr[0]!.condition.resourceTypes).toContain('xmlhttprequest');
+  });
+
+  it('adds initiatorDomains to every condition of a domain rule', () => {
+    const dnr = adapter.buildDnrRules(
+      [
+        rule({
+          requestDomains: ['api.example.com', 'localhost:8080'],
+          initiatorDomains: ['app.example.com'],
+        }),
+      ],
+      settings,
+    );
+    expect(dnr).toHaveLength(2);
+    expect(dnr[0]!.condition).toMatchObject({
+      urlFilter: '||api.example.com^',
+      initiatorDomains: ['app.example.com'],
+    });
+    expect(dnr[1]!.condition).toMatchObject({
+      urlFilter: '||localhost:8080',
+      initiatorDomains: ['app.example.com'],
+    });
+  });
+
+  it('normalizes initiator domains for Chrome and omits an effectively empty list', () => {
+    const dnr = adapter.buildDnrRules(
+      [
+        rule({
+          requestDomains: ['a.com'],
+          initiatorDomains: ['HTTP://Localhost:3000/', 'localhost'],
+        }),
+        rule({ requestDomains: ['b.com'], initiatorDomains: ['', '  '] }),
+      ],
+      settings,
+    );
+    expect(dnr[0]!.condition.initiatorDomains).toEqual(['localhost']);
+    expect(dnr[1]!.condition).not.toHaveProperty('initiatorDomains');
+  });
+
+  it('does not scope a rule that lacks the field (config from before the field existed)', () => {
+    const dnr = adapter.buildDnrRules([rule({ requestDomains: ['a.com'] })], settings);
+    expect(dnr[0]!.condition).not.toHaveProperty('initiatorDomains');
   });
 });

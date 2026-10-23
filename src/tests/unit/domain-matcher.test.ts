@@ -7,6 +7,8 @@ import {
   isLocalhost,
   domainToUrlFilter,
   urlMatchesAny,
+  isValidInitiatorHost,
+  normalizeInitiatorDomains,
 } from '@/engine/domain-matcher';
 
 describe('normalizeOrigin', () => {
@@ -87,5 +89,52 @@ describe('urlMatchesAny', () => {
   });
   it('returns false when nothing matches', () => {
     expect(urlMatchesAny('https://foo.com', ['bar.com'])).toBe(false);
+  });
+});
+
+describe('normalizeInitiatorDomains', () => {
+  it('strips scheme, port, path and trailing dots, and lowercases', () => {
+    expect(normalizeInitiatorDomains(['HTTPS://App.Example.com:8443/path?x=1'])).toEqual([
+      'app.example.com',
+    ]);
+    expect(normalizeInitiatorDomains(['localhost:3000', 'Example.com.', '127.0.0.1:5173'])).toEqual(
+      ['localhost', 'example.com', '127.0.0.1'],
+    );
+  });
+  it('drops blanks and de-duplicates after normalizing', () => {
+    expect(
+      normalizeInitiatorDomains(['', '  ', 'http://', 'a.com', 'A.COM', 'https://a.com:443/x']),
+    ).toEqual(['a.com']);
+  });
+  it('keeps entries that are not hostnames so the validator can reject them', () => {
+    expect(normalizeInitiatorDomains(['*.example.com', 'bad domain'])).toEqual([
+      '*.example.com',
+      'bad domain',
+    ]);
+  });
+  it('tolerates a missing or malformed list', () => {
+    expect(normalizeInitiatorDomains(undefined)).toEqual([]);
+    expect(normalizeInitiatorDomains('localhost')).toEqual([]);
+    expect(normalizeInitiatorDomains([42, null, 'a.com'])).toEqual(['a.com']);
+  });
+});
+
+describe('isValidInitiatorHost', () => {
+  it('accepts hostnames, localhost and IPv4 addresses', () => {
+    for (const h of [
+      'localhost',
+      'app.example.com',
+      'my-app.dev',
+      '127.0.0.1',
+      'xn--bcher-kva.de',
+    ]) {
+      expect(isValidInitiatorHost(h), h).toBe(true);
+    }
+  });
+  it('rejects wildcards, spaces, underscores, edge hyphens and empty labels', () => {
+    for (const h of ['', '*.example.com', 'bad domain', 'a_b.com', '-a.com', 'a-.com', 'a..com']) {
+      expect(isValidInitiatorHost(h), h).toBe(false);
+    }
+    expect(isValidInitiatorHost(`${'a'.repeat(250)}.com`)).toBe(false);
   });
 });

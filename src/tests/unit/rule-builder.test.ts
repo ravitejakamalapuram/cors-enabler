@@ -104,3 +104,22 @@ describe('buildResponseHeaderSpecs — overrides', () => {
     expect(m['Access-Control-Max-Age']).toBe('120');
   });
 });
+
+describe('buildResponseHeaderSpecs — Private Network Access default', () => {
+  const pna = (s: CorsSettings, r: CorsRule = rule({})): string | undefined =>
+    headerMap(buildResponseHeaderSpecs(r, s))['Access-Control-Allow-Private-Network'];
+
+  it('is off by default', () => {
+    expect(DEFAULT_SETTINGS.allowPrivateNetwork).toBe(false);
+    expect(pna(DEFAULT_SETTINGS)).toBeUndefined();
+  });
+  it('is emitted when the setting is turned on', () => {
+    expect(pna({ ...DEFAULT_SETTINGS, allowPrivateNetwork: true })).toBe('true');
+  });
+  it('a per-rule choice overrides the default either way', () => {
+    expect(pna(DEFAULT_SETTINGS, rule({ allowPrivateNetwork: true }))).toBe('true');
+    expect(
+      pna({ ...DEFAULT_SETTINGS, allowPrivateNetwork: true }, rule({ allowPrivateNetwork: false })),
+    ).toBeUndefined();
+  });
+});

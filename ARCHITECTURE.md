@@ -106,6 +106,12 @@ A `CorsRule` is expanded by `network-adapter.buildDnrRules`:
 - **Domain rule** → one DNR rule **per domain**, each with a `urlFilter`
   (ports are supported via `urlFilter`, which `requestDomains` cannot express),
   priority `≥2` so specific rules win over the global rule.
+- **Initiator scoping** → when a rule's `initiatorDomains` (the global rule's come
+  from `settings.globalInitiatorDomains`) is non-empty, every condition above also
+  gets `initiatorDomains`, so the rule only applies to requests made by those
+  pages. Entries are bare hostnames (`normalizeInitiatorDomains` strips scheme,
+  port and path, lowercases and de-duplicates; the validator rejects the rest).
+  Empty (the default) means requests from any page.
 - Each rule's action is `modifyHeaders` with `responseHeaders` computed by
   `rule-builder` following CORS semantics.
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateRule, resolveOriginContext } from '@/engine/cors-validator';
+import { validateRule, validateRules, resolveOriginContext } from '@/engine/cors-validator';
 import { DEFAULT_SETTINGS } from '@/shared/constants';
 import type { CorsRule, CorsSettings } from '@/engine/types';
 
@@ -94,5 +94,39 @@ describe('validateRule — CORS semantics', () => {
     const res = validateRule(rule({ name: '  ' }), settings);
     expect(res.valid).toBe(false);
     expect(res.errors.map((e) => e.code)).toContain('VALIDATION_FAILED');
+  });
+});
+
+describe('initiator domain validation', () => {
+  it('accepts hostnames, localhost, IPs and scheme/port/path forms that normalize cleanly', () => {
+    const res = validateRule(
+      rule({
+        initiatorDomains: ['localhost', '127.0.0.1', 'App.Example.com', 'http://dev.test:3000/x'],
+      }),
+      settings,
+    );
+    expect(res.valid).toBe(true);
+  });
+
+  it('REJECTS a rule initiator that is not a hostname, with a clear message', () => {
+    const res = validateRule(rule({ initiatorDomains: ['*.example.com', 'bad domain'] }), settings);
+    expect(res.valid).toBe(false);
+    expect(res.errors.map((e) => e.code)).toEqual(['INVALID_DOMAIN', 'INVALID_DOMAIN']);
+    expect(res.errors[0]!.userMessage).toContain('"*.example.com"');
+    expect(res.errors[0]!.userMessage).toContain('bare hostname');
+  });
+
+  it('REJECTS an invalid globalInitiatorDomains entry even with no user rules', () => {
+    const res = validateRules([], { ...settings, globalInitiatorDomains: ['ok.com', 'a_b.com'] });
+    expect(res.valid).toBe(false);
+    expect(res.errors).toHaveLength(1);
+    expect(res.errors[0]!.userMessage).toContain('"a_b.com"');
+  });
+
+  it('accepts default settings and settings that predate the field', () => {
+    expect(validateRules([], settings).valid).toBe(true);
+    const legacy = { ...settings } as Partial<CorsSettings>;
+    delete legacy.globalInitiatorDomains;
+    expect(validateRules([], legacy as CorsSettings).valid).toBe(true);
   });
 });

@@ -79,7 +79,8 @@ export const COMMON_DEV_ORIGINS = [
 export const DEFAULT_SETTINGS: CorsSettings = {
   credentialsMode: false,
   credentialedOrigin: 'http://localhost:3000',
-  allowPrivateNetwork: true,
+  allowPrivateNetwork: false,
+  globalInitiatorDomains: [],
   developerMode: false,
   logLevel: 'info',
   captureNetworkActivity: true,

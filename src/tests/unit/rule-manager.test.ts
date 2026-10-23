@@ -26,6 +26,14 @@ describe('RuleManager CRUD', () => {
     expect(r.resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
   });
 
+  it('createRule stores normalized initiatorDomains (empty = any initiator)', () => {
+    expect(mgr.createRule({ name: 'A' }).initiatorDomains).toEqual([]);
+    expect(
+      mgr.createRule({ name: 'B', initiatorDomains: ['HTTP://Localhost:3000/', 'localhost'] })
+        .initiatorDomains,
+    ).toEqual(['localhost']);
+  });
+
   it('addRule appends immutably', () => {
     const { rules } = mgr.addRule([], { name: 'A' });
     expect(rules).toHaveLength(1);
@@ -82,6 +90,12 @@ describe('computeEffectiveRules', () => {
     });
     expect(on.allowedOrigins).toEqual(['http://localhost:3000']);
     expect(on.allowCredentials).toBe(true);
+  });
+
+  it('global rule carries globalInitiatorDomains (empty by default = any initiator)', () => {
+    expect(mgr.buildGlobalRule(settings).initiatorDomains).toEqual([]);
+    const scoped = mgr.buildGlobalRule({ ...settings, globalInitiatorDomains: ['localhost'] });
+    expect(scoped.initiatorDomains).toEqual(['localhost']);
   });
 });
 

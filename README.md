@@ -31,7 +31,9 @@ API → response → CORS Engine (adds Access-Control-* headers) → Browser →
 ## Features
 
 - **One-click Enable / Disable** with a clear ●/○ status.
-- **Zero configuration** for common localhost development (a global rule covers all APIs).
+- **Zero configuration** for common localhost development (a global rule covers all APIs,
+  for requests made by any page; the engine can limit it to listed initiator
+  hostnames, not exposed in the UI yet).
 - **CORS-correct**: never emits the invalid `Access-Control-Allow-Origin: *` +
   `Access-Control-Allow-Credentials: true` combination. Credentialed mode uses a
   specific origin automatically.
@@ -86,7 +88,7 @@ Requires **Chrome 116+**.
 | ✓   | Add/override CORS response headers (ACAO, ACAM, ACAH, ACEH, ACAC).                                               |
 | ✓   | Apply headers to preflight (OPTIONS) responses returned by the server.                                           |
 | ✓   | Correct credentialed CORS (specific origin + `Allow-Credentials: true`).                                         |
-| ✓   | `Access-Control-Allow-Private-Network` for public→localhost requests.                                            |
+| ✓   | `Access-Control-Allow-Private-Network` for public→localhost requests (opt-in, off by default).                   |
 | ~   | Multiple simultaneous credentialed origins — one origin per rule only (Chrome cannot echo the request `Origin`). |
 | ~   | Network activity inspection — unpacked/dev builds only, no response status codes.                                |
 | ✗   | Fabricate a 2xx preflight response when the server errors on OPTIONS.                                            |
