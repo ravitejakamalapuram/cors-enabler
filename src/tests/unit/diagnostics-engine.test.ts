@@ -67,6 +67,13 @@ describe('DiagnosticsEngine.diagnose', () => {
     expect(res.matchedRule?.id).toBe('high');
   });
 
+  it('ignores rules that do not apply to fetch/XHR requests', () => {
+    const frames = rule({ id: 'frames', priority: 5, resourceTypes: ['main_frame'] });
+    const xhr = rule({ id: 'xhr', priority: 2 });
+    const res = engine.diagnose({ url }, [frames, xhr], DEFAULT_SETTINGS, true);
+    expect(res.matchedRule?.id).toBe('xhr');
+  });
+
   it('warns when two matching rules share the top priority', () => {
     const a = rule({ id: 'a', name: 'A' });
     const b = rule({ id: 'b', name: 'B' });

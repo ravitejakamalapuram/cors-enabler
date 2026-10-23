@@ -1,4 +1,5 @@
 import { resolveOriginContext } from '@/engine/cors-validator';
+import { DEFAULT_RESOURCE_TYPES } from '@/shared/constants';
 import { isLocalhost, normalizeOrigin, urlMatchesAny } from '@/engine/domain-matcher';
 import type {
   CorsRule,
@@ -36,7 +37,10 @@ export class DiagnosticsEngine {
     const matches = rules
       .filter(
         (r) =>
-          r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
+          r.enabled &&
+          // Diagnostics models fetch/XHR; DNR skips rules limited to other types.
+          (r.resourceTypes ?? DEFAULT_RESOURCE_TYPES).includes('xmlhttprequest') &&
+          (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
       )
       .sort((a, b) => effectivePriority(b) - effectivePriority(a));
     const matchedRule = matches[0] ?? null;
