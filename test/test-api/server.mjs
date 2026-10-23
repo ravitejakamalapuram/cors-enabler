@@ -32,6 +32,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === '/cdn.js') {
+    // Stands in for a third-party CDN that already sends valid CORS headers.
+    res.setHeader('Content-Type', 'text/javascript');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.statusCode = 200;
+    res.end('window.__cdnLoaded = true;');
+    return;
+  }
+
   if (url.pathname === '/pixel.png') {
     res.setHeader('Content-Type', 'image/png');
     res.statusCode = 200;

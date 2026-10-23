@@ -92,6 +92,15 @@ describe('computeEffectiveRules', () => {
     expect(on.allowCredentials).toBe(true);
   });
 
+  it('credentialed global rule without initiators stays on fetch/XHR only', () => {
+    const creds = { ...settings, credentialsMode: true };
+    expect(mgr.buildGlobalRule(creds).resourceTypes).toEqual(['xmlhttprequest']);
+    expect(
+      mgr.buildGlobalRule({ ...creds, globalInitiatorDomains: ['localhost'] }).resourceTypes,
+    ).toEqual(DEFAULT_RESOURCE_TYPES);
+    expect(mgr.buildGlobalRule(settings).resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
+  });
+
   it('global rule carries globalInitiatorDomains (empty by default = any initiator)', () => {
     expect(mgr.buildGlobalRule(settings).initiatorDomains).toEqual([]);
     const scoped = mgr.buildGlobalRule({ ...settings, globalInitiatorDomains: ['localhost'] });

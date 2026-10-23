@@ -92,3 +92,26 @@ test('loads a crossorigin image', async () => {
   expect(loaded).toBe(true);
   await app.close();
 });
+
+test("leaves another site's CDN scripts alone while credentials mode is on", async () => {
+  await setEnabled(true);
+  await setCredentials(true);
+  // 127.0.0.1 is a different origin from the credentialed origin (localhost:3000).
+  const other = await context.newPage();
+  await other.goto('http://127.0.0.1:3000');
+  const loaded = await other.evaluate(
+    (api) =>
+      new Promise<boolean>((resolve) => {
+        const s = document.createElement('script');
+        s.crossOrigin = 'anonymous';
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        s.src = `${api}/cdn.js?t=${Date.now()}`;
+        document.head.appendChild(s);
+      }),
+    API,
+  );
+  await setCredentials(false);
+  expect(loaded).toBe(true);
+  await other.close();
+});

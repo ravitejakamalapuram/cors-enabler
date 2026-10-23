@@ -77,6 +77,11 @@ export class RuleManager {
 
   /** The synthetic global rule installed by the "Enable CORS" switch. */
   buildGlobalRule(settings: CorsSettings): CorsRule {
+    // A credentialed global rule rewrites Allow-Origin to one fixed origin, which would break
+    // every other site's own CORS-enabled images, fonts and scripts, so it stays on fetch/XHR
+    // unless initiator-scoped.
+    const unscopedCredentialed =
+      settings.credentialsMode && settings.globalInitiatorDomains.length === 0;
     return {
       id: GLOBAL_RULE_ID,
       enabled: true,
@@ -84,7 +89,7 @@ export class RuleManager {
       mode: 'global',
       requestDomains: [],
       initiatorDomains: settings.globalInitiatorDomains,
-      resourceTypes: DEFAULT_RESOURCE_TYPES,
+      resourceTypes: unscopedCredentialed ? ['xmlhttprequest'] : DEFAULT_RESOURCE_TYPES,
       allowedOrigins: settings.credentialsMode ? [settings.credentialedOrigin] : ['*'],
       allowCredentials: settings.credentialsMode,
       exposeHeaders: [],
