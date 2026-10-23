@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RuleManager } from '@/engine/rule-manager';
-import { DEFAULT_SETTINGS } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, DEFAULT_SETTINGS } from '@/shared/constants';
 import type { CorsRule, CorsSettings, NetworkAdapter } from '@/engine/types';
 
 const settings: CorsSettings = { ...DEFAULT_SETTINGS };
@@ -23,7 +23,15 @@ describe('RuleManager CRUD', () => {
     expect(r.id).toBeTruthy();
     expect(r.enabled).toBe(true);
     expect(r.mode).toBe('domain');
-    expect(r.resourceTypes).toEqual(['xmlhttprequest']);
+    expect(r.resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
+  });
+
+  it('createRule stores normalized initiatorDomains (empty = any initiator)', () => {
+    expect(mgr.createRule({ name: 'A' }).initiatorDomains).toEqual([]);
+    expect(
+      mgr.createRule({ name: 'B', initiatorDomains: ['HTTP://Localhost:3000/', 'localhost'] })
+        .initiatorDomains,
+    ).toEqual(['localhost']);
   });
 
   it('addRule appends immutably', () => {
@@ -82,6 +90,21 @@ describe('computeEffectiveRules', () => {
     });
     expect(on.allowedOrigins).toEqual(['http://localhost:3000']);
     expect(on.allowCredentials).toBe(true);
+  });
+
+  it('credentialed global rule without initiators stays on fetch/XHR only', () => {
+    const creds = { ...settings, credentialsMode: true };
+    expect(mgr.buildGlobalRule(creds).resourceTypes).toEqual(['xmlhttprequest']);
+    expect(
+      mgr.buildGlobalRule({ ...creds, globalInitiatorDomains: ['localhost'] }).resourceTypes,
+    ).toEqual(DEFAULT_RESOURCE_TYPES);
+    expect(mgr.buildGlobalRule(settings).resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
+  });
+
+  it('global rule carries globalInitiatorDomains (empty by default = any initiator)', () => {
+    expect(mgr.buildGlobalRule(settings).initiatorDomains).toEqual([]);
+    const scoped = mgr.buildGlobalRule({ ...settings, globalInitiatorDomains: ['localhost'] });
+    expect(scoped.initiatorDomains).toEqual(['localhost']);
   });
 });
 

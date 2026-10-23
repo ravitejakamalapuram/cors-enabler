@@ -51,7 +51,10 @@ If you don't want `<all_urls>`, you can:
 2. Keep the extension **disabled** except when actively debugging.
 
 The global feature is only as broad as it needs to be; nothing runs while the
-engine is disabled.
+engine is disabled. By default the global rule applies to requests made by any
+page; the engine can limit it (and any rule) to a list of initiator hostnames
+(`globalInitiatorDomains`, `initiatorDomains`; not exposed in the UI yet).
+`Access-Control-Allow-Private-Network` is opt-in and off by default.
 
 ## Content Security Policy
 
