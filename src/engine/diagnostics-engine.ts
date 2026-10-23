@@ -79,18 +79,19 @@ export class DiagnosticsEngine {
         : 'Not modifying responses while disabled.',
     });
 
-    // Origin mismatch: a specific Allow-Origin must equal the page origin exactly.
+    // Origin mismatch: the browser compares Allow-Origin to the page origin as an
+    // exact string. Skipped on a tie, where the emitted origin is undefined.
     const emitted = matchedRule
       ? resolveOriginContext(matchedRule, settings).origin
       : settings.credentialsMode
         ? settings.credentialedOrigin
         : '*';
     const pageOrigin = input.origin ? normalizeOrigin(input.origin) : null;
-    if (pageOrigin && emitted !== '*' && normalizeOrigin(emitted) !== pageOrigin) {
+    if (tied.length < 2 && pageOrigin && emitted !== '*' && emitted !== pageOrigin) {
       checks.push({
         label: 'Origin mismatch',
         status: 'fail',
-        detail: `The extension sends Access-Control-Allow-Origin: ${emitted}, but the page origin is ${pageOrigin}. The browser requires an exact match. Add ${pageOrigin} to the rule's allowed origins.`,
+        detail: `The extension sends Access-Control-Allow-Origin: ${emitted}, but the page origin is ${pageOrigin}. The browser compares them as exact strings. Set the rule's allowed origin to ${pageOrigin}.`,
       });
     }
 

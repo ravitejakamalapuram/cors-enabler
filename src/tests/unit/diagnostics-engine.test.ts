@@ -35,6 +35,17 @@ describe('DiagnosticsEngine.diagnose', () => {
     expect(res.verdict).toBe('unsupported');
   });
 
+  it('flags an emitted origin with a trailing slash, which the browser rejects', () => {
+    const r = rule({ allowedOrigins: ['http://localhost:5173/'] });
+    const res = engine.diagnose(
+      { url, origin: 'http://localhost:5173' },
+      [r],
+      DEFAULT_SETTINGS,
+      true,
+    );
+    expect(res.checks.find((c) => c.label === 'Origin mismatch')?.status).toBe('fail');
+  });
+
   it('does not flag a mismatch when the origin matches or the rule emits "*"', () => {
     const exact = rule({ allowedOrigins: ['http://localhost:5173'] });
     const wildcard = rule({ allowedOrigins: [] });
