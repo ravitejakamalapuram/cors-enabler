@@ -1,4 +1,8 @@
-import { DNR_RULE_ID_BASE, DNR_UNSAFE_RULE_LIMIT } from '@/shared/constants';
+import {
+  DEFAULT_RESOURCE_TYPES,
+  DNR_RULE_ID_BASE,
+  DNR_UNSAFE_RULE_LIMIT,
+} from '@/shared/constants';
 import { domainToUrlFilter } from '@/engine/domain-matcher';
 import { buildResponseHeaderSpecs } from '@/engine/rule-builder';
 import { rootLogger } from '@/shared/logger';
@@ -26,7 +30,7 @@ export class ChromeNetworkAdapter implements NetworkAdapter {
         operation: s.operation as chrome.declarativeNetRequest.HeaderOperation,
         ...(s.value !== undefined ? { value: s.value } : {}),
       }));
-      const resourceTypes = (rule.resourceTypes ?? ['xmlhttprequest']) as ResourceType[];
+      const resourceTypes = (rule.resourceTypes ?? DEFAULT_RESOURCE_TYPES) as ResourceType[];
       const domains = rule.requestDomains?.filter(Boolean) ?? [];
       const priority = rule.priority ?? (rule.mode === 'global' ? 1 : 2);
 

@@ -31,7 +31,7 @@ describe('buildResponseHeaderSpecs — non-credentialed', () => {
     const m = headerMap(buildResponseHeaderSpecs(rule({}), settings));
     expect(m['Access-Control-Allow-Origin']).toBe('*');
     expect(m['Access-Control-Allow-Methods']).toBe('*');
-    expect(m['Access-Control-Allow-Headers']).toBe('*');
+    expect(m['Access-Control-Allow-Headers']).toBe('*, Authorization');
     expect(m['Access-Control-Allow-Credentials']).toBeUndefined();
   });
 
@@ -61,6 +61,27 @@ describe('buildResponseHeaderSpecs — credentialed', () => {
     const m = headerMap(buildResponseHeaderSpecs(credRule, settings));
     expect(m['Access-Control-Allow-Credentials']).toBe('true');
     expect(m['Vary']).toBe('Origin');
+  });
+
+  it('appends Vary instead of replacing the server value', () => {
+    const vary = buildResponseHeaderSpecs(credRule, settings).find((s) => s.header === 'Vary');
+    expect(vary?.operation).toBe('append');
+  });
+
+  it('exposes a concrete header list (not "*") when credentials are on', () => {
+    const m = headerMap(buildResponseHeaderSpecs(credRule, settings));
+    expect(m['Access-Control-Expose-Headers']).not.toBe('*');
+    expect(m['Access-Control-Expose-Headers']).toContain('X-Total-Count');
+  });
+
+  it('adds Authorization next to the "*" allowed-headers wildcard', () => {
+    const m = headerMap(buildResponseHeaderSpecs(rule({}), settings));
+    expect(m['Access-Control-Allow-Headers']).toBe('*, Authorization');
+  });
+
+  it('keeps "*" for exposed headers without credentials', () => {
+    const m = headerMap(buildResponseHeaderSpecs(rule({}), settings));
+    expect(m['Access-Control-Expose-Headers']).toBe('*');
   });
 });
 

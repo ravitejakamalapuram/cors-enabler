@@ -24,6 +24,26 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === '/headers') {
+    res.setHeader('Vary', 'Accept-Encoding');
+    res.setHeader('X-Total-Count', '5');
+    res.statusCode = 200;
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  if (url.pathname === '/pixel.png') {
+    res.setHeader('Content-Type', 'image/png');
+    res.statusCode = 200;
+    res.end(
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    );
+    return;
+  }
+
   if (url.pathname === '/echo') {
     let body = '';
     req.on('data', (c) => (body += c));

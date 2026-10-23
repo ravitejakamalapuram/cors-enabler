@@ -1,4 +1,4 @@
-import { GLOBAL_RULE_ID } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, GLOBAL_RULE_ID } from '@/shared/constants';
 import { presetToRuleInput } from '@/engine/presets';
 import type { CorsRule, CorsRuleInput, CorsSettings, NetworkAdapter, Preset } from '@/engine/types';
 
@@ -24,7 +24,7 @@ export class RuleManager {
       name: input.name,
       mode: input.mode ?? 'domain',
       requestDomains: input.requestDomains ?? [],
-      resourceTypes: input.resourceTypes ?? ['xmlhttprequest'],
+      resourceTypes: input.resourceTypes ?? DEFAULT_RESOURCE_TYPES,
       allowedOrigins: input.allowedOrigins ?? [],
       allowCredentials: input.allowCredentials ?? false,
       exposeHeaders: input.exposeHeaders ?? [],
@@ -81,7 +81,7 @@ export class RuleManager {
       name: 'Global CORS (all development APIs)',
       mode: 'global',
       requestDomains: [],
-      resourceTypes: ['xmlhttprequest'],
+      resourceTypes: DEFAULT_RESOURCE_TYPES,
       allowedOrigins: settings.credentialsMode ? [settings.credentialedOrigin] : ['*'],
       allowCredentials: settings.credentialsMode,
       exposeHeaders: [],

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RuleManager } from '@/engine/rule-manager';
-import { DEFAULT_SETTINGS } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, DEFAULT_SETTINGS } from '@/shared/constants';
 import type { CorsRule, CorsSettings, NetworkAdapter } from '@/engine/types';
 
 const settings: CorsSettings = { ...DEFAULT_SETTINGS };
@@ -23,7 +23,7 @@ describe('RuleManager CRUD', () => {
     expect(r.id).toBeTruthy();
     expect(r.enabled).toBe(true);
     expect(r.mode).toBe('domain');
-    expect(r.resourceTypes).toEqual(['xmlhttprequest']);
+    expect(r.resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
   });
 
   it('addRule appends immutably', () => {

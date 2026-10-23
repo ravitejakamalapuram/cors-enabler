@@ -1,4 +1,9 @@
-import { CORS_HEADERS, DEFAULT_ALLOW_HEADERS, DEFAULT_METHODS } from '@/shared/constants';
+import {
+  CORS_HEADERS,
+  DEFAULT_ALLOW_HEADERS,
+  DEFAULT_EXPOSE_HEADERS,
+  DEFAULT_METHODS,
+} from '@/shared/constants';
 import { resolveOriginContext } from '@/engine/cors-validator';
 import type { CorsRule, CorsSettings, HeaderSpec } from '@/engine/types';
 
@@ -15,7 +20,7 @@ export function buildResponseHeaderSpecs(rule: CorsRule, settings: CorsSettings)
 
   // If we echo a specific origin, tell caches it varies by Origin.
   if (origin !== '*') {
-    specs.push({ header: 'Vary', operation: 'set', value: 'Origin' });
+    specs.push({ header: 'Vary', operation: 'append', value: 'Origin' });
   }
 
   const methods =
@@ -31,11 +36,15 @@ export function buildResponseHeaderSpecs(rule: CorsRule, settings: CorsSettings)
       ? rule.allowHeaders.join(', ')
       : credentials
         ? DEFAULT_ALLOW_HEADERS.join(', ')
-        : '*';
+        : '*, Authorization'; // the Fetch spec's "*" does not cover Authorization
   specs.push({ header: CORS_HEADERS.allowHeaders, operation: 'set', value: allowHeaders });
 
   const expose =
-    rule.exposeHeaders && rule.exposeHeaders.length > 0 ? rule.exposeHeaders.join(', ') : '*';
+    rule.exposeHeaders && rule.exposeHeaders.length > 0
+      ? rule.exposeHeaders.join(', ')
+      : credentials
+        ? DEFAULT_EXPOSE_HEADERS.join(', ')
+        : '*';
   specs.push({ header: CORS_HEADERS.exposeHeaders, operation: 'set', value: expose });
 
   if (credentials) {

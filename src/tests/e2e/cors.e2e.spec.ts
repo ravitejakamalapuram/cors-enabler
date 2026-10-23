@@ -35,6 +35,7 @@ async function setEngine(enabled: boolean): Promise<void> {
 test.beforeAll(async () => {
   context = await chromium.launchPersistentContext('', {
     headless: false,
+    ...(process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : {}),
     args: [
       '--headless=new',
       `--disable-extensions-except=${EXT}`,
