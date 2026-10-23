@@ -33,13 +33,17 @@ export class DiagnosticsEngine {
 
     // DNR applies every matching modifyHeaders rule in descending priority, so
     // the highest-priority match decides each "set" header. Mirror that here.
-    const matchedRule =
-      rules
-        .filter(
-          (r) =>
-            r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
-        )
-        .sort((a, b) => effectivePriority(b) - effectivePriority(a))[0] ?? null;
+    const matches = rules
+      .filter(
+        (r) =>
+          r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
+      )
+      .sort((a, b) => effectivePriority(b) - effectivePriority(a));
+    const matchedRule = matches[0] ?? null;
+    // Chrome does not define which of two same-priority rules wins.
+    const tied = matchedRule
+      ? matches.filter((r) => effectivePriority(r) === effectivePriority(matchedRule))
+      : [];
 
     // Engine state.
     checks.push({
@@ -56,6 +60,14 @@ export class DiagnosticsEngine {
         ? `Matched rule "${matchedRule.name}".`
         : 'No specific rule matched — the global rule (if enabled) applies.',
     });
+
+    if (tied.length > 1) {
+      checks.push({
+        label: 'Conflicting rules',
+        status: 'warn',
+        detail: `${tied.map((r) => `"${r.name}"`).join(', ')} all match this URL at priority ${effectivePriority(tied[0] as CorsRule)}. Chrome does not define which one sets the headers. Give one rule a higher priority or narrow its domains.`,
+      });
+    }
 
     // Response modification. This is configuration only: nothing here has
     // observed a real response, so it must never read as confirmed.
@@ -185,6 +197,7 @@ export class DiagnosticsEngine {
   }
 }
 
+/** The DNR priority a rule is installed with (see network-adapter buildDnrRules). */
 function effectivePriority(rule: CorsRule): number {
   return rule.priority ?? (rule.mode === 'global' ? 1 : 2);
 }

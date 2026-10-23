@@ -56,6 +56,14 @@ describe('DiagnosticsEngine.diagnose', () => {
     expect(res.matchedRule?.id).toBe('high');
   });
 
+  it('warns when two matching rules share the top priority', () => {
+    const a = rule({ id: 'a', name: 'A' });
+    const b = rule({ id: 'b', name: 'B' });
+    const res = engine.diagnose({ url }, [a, b], DEFAULT_SETTINGS, true);
+    expect(res.checks.find((c) => c.label === 'Conflicting rules')?.status).toBe('warn');
+    expect(res.verdict).toBe('partial');
+  });
+
   it('never reports response modification as confirmed', () => {
     const res = engine.diagnose({ url }, [rule({})], DEFAULT_SETTINGS, true);
     const check = res.checks.find((c) => c.label === 'Response header rules configured');
