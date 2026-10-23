@@ -123,22 +123,18 @@ export default function App(): React.JSX.Element {
         <span className="label">Diagnostics</span>
         <Check
           status={enabled && (status?.installedRuleIds.length ?? 0) > 0 ? 'ok' : 'fail'}
-          label="Network rules active"
+          label="Rules installed in Chrome"
           showDetail={false}
           testid="diag-network"
         />
-        <Check
-          status={status?.responseModification ? 'ok' : 'fail'}
-          label="Response header modification active"
-          showDetail={false}
-          testid="diag-response"
-        />
-        <Check
-          status={status?.requestModification ? 'ok' : 'fail'}
-          label="Preflight (OPTIONS) handling active"
-          showDetail={false}
-          testid="diag-preflight"
-        />
+        {enabled ? (
+          <Check
+            status="info"
+            label="Not confirmed on a real request. Preflight also needs a 2xx OPTIONS response from the server."
+            showDetail={false}
+            testid="diag-unverified"
+          />
+        ) : null}
       </div>
 
       <div className="footer-actions">

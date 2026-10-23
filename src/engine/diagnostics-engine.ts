@@ -1,5 +1,5 @@
 import { resolveOriginContext } from '@/engine/cors-validator';
-import { isLocalhost, urlMatchesAny } from '@/engine/domain-matcher';
+import { isLocalhost, normalizeOrigin, urlMatchesAny } from '@/engine/domain-matcher';
 import type {
   CorsRule,
   CorsSettings,
@@ -31,11 +31,15 @@ export class DiagnosticsEngine {
     const isPreflight = method === 'OPTIONS';
     const withCredentials = Boolean(input.withCredentials);
 
+    // DNR applies every matching modifyHeaders rule in descending priority, so
+    // the highest-priority match decides each "set" header. Mirror that here.
     const matchedRule =
-      rules.find(
-        (r) =>
-          r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
-      ) ?? null;
+      rules
+        .filter(
+          (r) =>
+            r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
+        )
+        .sort((a, b) => effectivePriority(b) - effectivePriority(a))[0] ?? null;
 
     // Engine state.
     checks.push({
@@ -53,14 +57,30 @@ export class DiagnosticsEngine {
         : 'No specific rule matched — the global rule (if enabled) applies.',
     });
 
-    // Response modification.
+    // Response modification. This is configuration only: nothing here has
+    // observed a real response, so it must never read as confirmed.
     checks.push({
-      label: 'Response header modification',
-      status: enabled ? 'ok' : 'fail',
+      label: 'Response header rules configured',
+      status: enabled ? 'info' : 'fail',
       detail: enabled
-        ? 'Access-Control-* response headers are being set via declarativeNetRequest.'
+        ? 'Rules that set Access-Control-* headers are installed. This simulation cannot confirm they reached a real response; check the response headers in DevTools.'
         : 'Not modifying responses while disabled.',
     });
+
+    // Origin mismatch: a specific Allow-Origin must equal the page origin exactly.
+    const emitted = matchedRule
+      ? resolveOriginContext(matchedRule, settings).origin
+      : settings.credentialsMode
+        ? settings.credentialedOrigin
+        : '*';
+    const pageOrigin = input.origin ? normalizeOrigin(input.origin) : null;
+    if (pageOrigin && emitted !== '*' && normalizeOrigin(emitted) !== pageOrigin) {
+      checks.push({
+        label: 'Origin mismatch',
+        status: 'fail',
+        detail: `The extension sends Access-Control-Allow-Origin: ${emitted}, but the page origin is ${pageOrigin}. The browser requires an exact match. Add ${pageOrigin} to the rule's allowed origins.`,
+      });
+    }
 
     // Preflight.
     if (isPreflight || !SIMPLE_METHODS.has(method) || this.hasNonSimpleHeaders(input)) {
@@ -136,7 +156,7 @@ export class DiagnosticsEngine {
       ? 'This request cannot be fully handled with the current configuration. See failing checks.'
       : hasWarn
         ? 'This request is supported with caveats. Review the warnings and limitations.'
-        : 'This request should succeed — the extension supplies the required CORS response headers.';
+        : 'No problems found in the configuration for this request. This is a simulation, not an observed request; confirm the response headers in DevTools.';
 
     return { request: input, matchedRule, isPreflight, checks, verdict, summary, limitations };
   }
@@ -163,4 +183,8 @@ export class DiagnosticsEngine {
     this.activity = [];
     return [];
   }
+}
+
+function effectivePriority(rule: CorsRule): number {
+  return rule.priority ?? (rule.mode === 'global' ? 1 : 2);
 }

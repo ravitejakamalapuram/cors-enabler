@@ -83,8 +83,6 @@ export interface CorsStatus {
   ruleCount: number;
   installedRuleIds: number[];
   protectedDomains: number;
-  requestModification: boolean;
-  responseModification: boolean;
   credentialsMode: boolean;
   developerMode: boolean;
   lastError?: EngineError | null;
