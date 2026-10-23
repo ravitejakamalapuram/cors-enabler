@@ -102,7 +102,8 @@ import `network-adapter` or call `chrome.declarativeNetRequest`.
 A `CorsRule` is expanded by `network-adapter.buildDnrRules`:
 
 - **Global rule** (no domains) → one DNR rule whose condition is just
-  `resourceTypes: ['xmlhttprequest']` (matches all URLs), priority `1`.
+  `resourceTypes: DEFAULT_RESOURCE_TYPES` (matches all URLs; only `xmlhttprequest` while
+  credentials mode is on and no initiators are set), priority `1`.
 - **Domain rule** → one DNR rule **per domain**, each with a `urlFilter`
   (ports are supported via `urlFilter`, which `requestDomains` cannot express),
   priority `≥2` so specific rules win over the global rule.
