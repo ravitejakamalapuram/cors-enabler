@@ -1,8 +1,8 @@
 import { DiagnosticsEngine } from '@/engine/diagnostics-engine';
 import { RuleManager } from '@/engine/rule-manager';
 import { StateMachine } from '@/engine/state-manager';
-import { validateRules } from '@/engine/cors-validator';
-import { extractHostPort } from '@/engine/domain-matcher';
+import { validateRules, validateSettings } from '@/engine/cors-validator';
+import { extractHostPort, normalizeInitiatorDomains } from '@/engine/domain-matcher';
 import { presetById } from '@/engine/presets';
 import { rootLogger } from '@/shared/logger';
 import type {
@@ -297,7 +297,13 @@ export class CorsEngine implements NetworkExtensionEngine {
 
   async updateSettings(patch: Partial<CorsSettings>): Promise<CorsSettings> {
     return this.enqueue(async () => {
-      this._settings = { ...this._settings, ...patch };
+      const next = { ...this._settings, ...patch };
+      if (patch.globalInitiatorDomains) {
+        next.globalInitiatorDomains = normalizeInitiatorDomains(patch.globalInitiatorDomains);
+      }
+      const invalid = validateSettings(next).errors[0];
+      if (invalid) throw invalid;
+      this._settings = next;
       await this.deps.persistence.saveSettings(this._settings);
       rootLogger.configure({
         level: this._settings.logLevel,
@@ -334,7 +340,15 @@ export class CorsEngine implements NetworkExtensionEngine {
           recoverable: true,
         };
       }
-      this._settings = { ...this._settings, ...config.settings };
+      // Backups from before initiator scoping lack the field: restore them as "any initiator".
+      const next = {
+        ...this._settings,
+        ...config.settings,
+        globalInitiatorDomains: normalizeInitiatorDomains(config.settings?.globalInitiatorDomains),
+      };
+      const invalid = validateSettings(next).errors[0];
+      if (invalid) throw invalid;
+      this._settings = next;
       this._rules = Array.isArray(config.rules) ? config.rules : [];
       await this.deps.persistence.saveSettings(this._settings);
       await this.deps.persistence.saveRules(this._rules);

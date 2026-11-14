@@ -116,6 +116,93 @@ describe('CorsEngine orchestration', () => {
     expect(res.rules[0]!.name).toBe('Keep me');
   });
 
+  it('round-trips initiator scoping through export and import', async () => {
+    await engine.updateSettings({ globalInitiatorDomains: ['localhost'] });
+    await engine.addRule({
+      name: 'Scoped',
+      requestDomains: ['a.com'],
+      initiatorDomains: ['x.dev'],
+    });
+    const cfg = JSON.parse(JSON.stringify(await engine.exportConfig())) as ExportedConfig;
+    expect(cfg.settings.globalInitiatorDomains).toEqual(['localhost']);
+    expect(cfg.rules[0]!.initiatorDomains).toEqual(['x.dev']);
+
+    await engine.updateSettings({ globalInitiatorDomains: [] });
+    await engine.clearRules();
+    const res = await engine.importConfig(cfg);
+    expect(res.settings.globalInitiatorDomains).toEqual(['localhost']);
+    expect(res.rules[0]!.initiatorDomains).toEqual(['x.dev']);
+  });
+
+  it('imports a config saved before initiator scoping existed', async () => {
+    await engine.updateSettings({ globalInitiatorDomains: ['localhost'] });
+    const oldSettings: Partial<CorsSettings> = { ...DEFAULT_SETTINGS };
+    delete oldSettings.globalInitiatorDomains;
+    const oldCfg = {
+      schema: 'cors-enabler/v1',
+      exportedAt: 0,
+      enabled: false,
+      // A rule from the old model: no initiatorDomains key.
+      rules: [
+        { id: 'old', enabled: true, name: 'Old', mode: 'domain', createdAt: 0, updatedAt: 0 },
+      ],
+      settings: oldSettings,
+    } as unknown as ExportedConfig;
+
+    const res = await engine.importConfig(oldCfg);
+    expect(res.rules).toHaveLength(1);
+    expect(res.settings.globalInitiatorDomains).toEqual([]);
+    expect(res.settings.allowPrivateNetwork).toBe(DEFAULT_SETTINGS.allowPrivateNetwork);
+    expect((await engine.enable()).state).toBe('ENABLED');
+  });
+
+  it('imports a config with no settings block or a malformed initiator list', async () => {
+    const base = { schema: 'cors-enabler/v1', exportedAt: 0, enabled: false, rules: [] };
+    const noSettings = await engine.importConfig(base as unknown as ExportedConfig);
+    expect(noSettings.settings.globalInitiatorDomains).toEqual([]);
+
+    const bad = await engine.importConfig({
+      ...base,
+      settings: { ...DEFAULT_SETTINGS, globalInitiatorDomains: 'localhost' },
+    } as unknown as ExportedConfig);
+    expect(bad.settings.globalInitiatorDomains).toEqual([]);
+  });
+
+  it('updateSettings stores normalized initiator domains and reinstalls when enabled', async () => {
+    await engine.enable();
+    const s = await engine.updateSettings({
+      globalInitiatorDomains: ['HTTP://Localhost:3000/', 'localhost', ''],
+    });
+    expect(s.globalInitiatorDomains).toEqual(['localhost']);
+    expect(store.settings.globalInitiatorDomains).toEqual(['localhost']);
+    expect((await engine.getStatus()).state).toBe('ENABLED');
+  });
+
+  it('rejects an invalid global initiator domain without storing it', async () => {
+    await engine.updateSettings({ globalInitiatorDomains: ['localhost'] });
+    await expect(
+      engine.updateSettings({ globalInitiatorDomains: ['*.example.com'] }),
+    ).rejects.toMatchObject({ code: 'INVALID_DOMAIN' });
+    expect(store.settings.globalInitiatorDomains).toEqual(['localhost']);
+    expect((await engine.getSettings()).globalInitiatorDomains).toEqual(['localhost']);
+  });
+
+  it('rejects an import whose global initiator domains are invalid', async () => {
+    const cfg = await engine.exportConfig();
+    cfg.settings.globalInitiatorDomains = ['bad domain'];
+    await expect(engine.importConfig(cfg)).rejects.toMatchObject({ code: 'INVALID_DOMAIN' });
+    expect(store.settings.globalInitiatorDomains).toEqual([]);
+  });
+
+  it('refuses to enable when stored settings hold an invalid initiator domain', async () => {
+    store.settings = { ...DEFAULT_SETTINGS, globalInitiatorDomains: ['bad domain'] };
+    await engine.initialize();
+    const s = await engine.enable();
+    expect(s.enabled).toBe(false);
+    expect(s.lastError?.code).toBe('INVALID_DOMAIN');
+    expect(adapter.installed).toHaveLength(0);
+  });
+
   it('rejects an invalid import schema', async () => {
     await expect(
       engine.importConfig({ schema: 'bogus' } as unknown as ExportedConfig),

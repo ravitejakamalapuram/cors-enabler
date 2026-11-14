@@ -42,7 +42,7 @@ Rules that matter when changing code:
 - State transitions go through the explicit machine in `state-manager.ts` (pure `nextState`), not ad-hoc flags.
 - The service worker re-installs rules on `onInstalled`/`onStartup`, since dynamic rules and in-memory state must survive SW restarts.
 
-Rule model -> DNR (`network-adapter.buildDnrRules`): a global rule (no domains) becomes one DNR rule matching all `xmlhttprequest` at priority 1; a domain rule becomes one DNR rule per domain using `urlFilter` (so ports work, which `requestDomains` cannot express) at priority >= 2 so specific rules beat the global one. DNR ids live in `DNR_RULE_ID_BASE..DNR_RULE_ID_MAX` (`shared/constants.ts`).
+Rule model -> DNR (`network-adapter.buildDnrRules`): a global rule (no domains) becomes one DNR rule matching `DEFAULT_RESOURCE_TYPES` (`xmlhttprequest`, `image`, `font`, `media`, `script`) at priority 1 (only `xmlhttprequest` while credentials mode is on and no initiators are set), restricted to `settings.globalInitiatorDomains` when that list is non-empty (a rule's own `initiatorDomains` does the same for domain rules; engine-only for now, no UI); a domain rule becomes one DNR rule per domain using `urlFilter` (so ports work, which `requestDomains` cannot express) at priority >= 2 so specific rules beat the global one. DNR ids live in `DNR_RULE_ID_BASE..DNR_RULE_ID_MAX` (`shared/constants.ts`).
 
 CORS semantics are enforced in `cors-validator.ts` (e.g. rejects `*` with credentials and multi-origin credentialed rules). Adding a rule field touches, in order: `engine/types.ts` (`CorsRule`), `rule-builder.ts` (header mapping), `cors-validator.ts`, `options/components/RuleEditor.tsx`, plus a unit test.
 
@@ -50,4 +50,4 @@ CORS semantics are enforced in `cors-validator.ts` (e.g. rejects `*` with creden
 
 ## Permissions and store metadata
 
-`host_permissions: ['<all_urls>']` plus `declarativeNetRequestFeedback` (`onRuleMatchedDebug` only fires for unpacked installs, so Network Activity is dev-only). Any manifest permission change must be mirrored in `.appforge/permissions.yaml` (justification, data access, security impact) and reflected in `PRIVACY.md` / `chrome-store/` listing. The version comes from `package.json`; `release.yaml` holds the Web Store item id and publishing contract.
+Private Network Access (`allowPrivateNetwork`) defaults to off. `host_permissions: ['<all_urls>']` plus `declarativeNetRequestFeedback` (`onRuleMatchedDebug` only fires for unpacked installs, so Network Activity is dev-only). Any manifest permission change must be mirrored in `.appforge/permissions.yaml` (justification, data access, security impact) and reflected in `PRIVACY.md` / `chrome-store/` listing. The version comes from `package.json`; `release.yaml` holds the Web Store item id and publishing contract.

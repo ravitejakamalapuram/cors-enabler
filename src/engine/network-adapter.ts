@@ -1,5 +1,9 @@
-import { DNR_RULE_ID_BASE, DNR_UNSAFE_RULE_LIMIT } from '@/shared/constants';
-import { domainToUrlFilter } from '@/engine/domain-matcher';
+import {
+  DEFAULT_RESOURCE_TYPES,
+  DNR_RULE_ID_BASE,
+  DNR_UNSAFE_RULE_LIMIT,
+} from '@/shared/constants';
+import { domainToUrlFilter, normalizeInitiatorDomains } from '@/engine/domain-matcher';
 import { buildResponseHeaderSpecs } from '@/engine/rule-builder';
 import { rootLogger } from '@/shared/logger';
 import type { CorsRule, CorsSettings, NetworkAdapter, ResourceType } from '@/engine/types';
@@ -26,8 +30,9 @@ export class ChromeNetworkAdapter implements NetworkAdapter {
         operation: s.operation as chrome.declarativeNetRequest.HeaderOperation,
         ...(s.value !== undefined ? { value: s.value } : {}),
       }));
-      const resourceTypes = (rule.resourceTypes ?? ['xmlhttprequest']) as ResourceType[];
+      const resourceTypes = (rule.resourceTypes ?? DEFAULT_RESOURCE_TYPES) as ResourceType[];
       const domains = rule.requestDomains?.filter(Boolean) ?? [];
+      const initiatorDomains = normalizeInitiatorDomains(rule.initiatorDomains);
       const priority = rule.priority ?? (rule.mode === 'global' ? 1 : 2);
 
       const conditions: chrome.declarativeNetRequest.RuleCondition[] =
@@ -46,7 +51,7 @@ export class ChromeNetworkAdapter implements NetworkAdapter {
             type: 'modifyHeaders' as chrome.declarativeNetRequest.RuleActionType,
             responseHeaders,
           },
-          condition,
+          condition: initiatorDomains.length > 0 ? { ...condition, initiatorDomains } : condition,
         });
       }
     }

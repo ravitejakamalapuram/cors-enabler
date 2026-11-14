@@ -1,4 +1,4 @@
-import { COMMON_DEV_ORIGINS } from '@/shared/constants';
+import { COMMON_DEV_ORIGINS, DEFAULT_RESOURCE_TYPES } from '@/shared/constants';
 import type { CorsRuleInput, Preset } from '@/engine/types';
 
 /**
@@ -61,7 +61,7 @@ export function presetToRuleInput(preset: Preset): CorsRuleInput {
     requestDomains: preset.domains,
     allowedOrigins: preset.origins,
     allowCredentials: preset.credentials,
-    resourceTypes: ['xmlhttprequest'],
+    resourceTypes: DEFAULT_RESOURCE_TYPES,
     priority: 2,
   };
 }

@@ -1,4 +1,5 @@
-import { GLOBAL_RULE_ID } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, GLOBAL_RULE_ID } from '@/shared/constants';
+import { normalizeInitiatorDomains } from '@/engine/domain-matcher';
 import { presetToRuleInput } from '@/engine/presets';
 import type { CorsRule, CorsRuleInput, CorsSettings, NetworkAdapter, Preset } from '@/engine/types';
 
@@ -24,7 +25,8 @@ export class RuleManager {
       name: input.name,
       mode: input.mode ?? 'domain',
       requestDomains: input.requestDomains ?? [],
-      resourceTypes: input.resourceTypes ?? ['xmlhttprequest'],
+      initiatorDomains: normalizeInitiatorDomains(input.initiatorDomains),
+      resourceTypes: input.resourceTypes ?? DEFAULT_RESOURCE_TYPES,
       allowedOrigins: input.allowedOrigins ?? [],
       allowCredentials: input.allowCredentials ?? false,
       exposeHeaders: input.exposeHeaders ?? [],
@@ -75,13 +77,19 @@ export class RuleManager {
 
   /** The synthetic global rule installed by the "Enable CORS" switch. */
   buildGlobalRule(settings: CorsSettings): CorsRule {
+    // A credentialed global rule rewrites Allow-Origin to one fixed origin, which would break
+    // every other site's own CORS-enabled images, fonts and scripts, so it stays on fetch/XHR
+    // unless initiator-scoped.
+    const unscopedCredentialed =
+      settings.credentialsMode && settings.globalInitiatorDomains.length === 0;
     return {
       id: GLOBAL_RULE_ID,
       enabled: true,
       name: 'Global CORS (all development APIs)',
       mode: 'global',
       requestDomains: [],
-      resourceTypes: ['xmlhttprequest'],
+      initiatorDomains: settings.globalInitiatorDomains,
+      resourceTypes: unscopedCredentialed ? ['xmlhttprequest'] : DEFAULT_RESOURCE_TYPES,
       allowedOrigins: settings.credentialsMode ? [settings.credentialedOrigin] : ['*'],
       allowCredentials: settings.credentialsMode,
       exposeHeaders: [],
