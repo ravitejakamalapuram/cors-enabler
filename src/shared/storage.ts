@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/shared/constants';
 import type { CorsRule, CorsSettings, EngineError, EngineState } from '@/engine/types';
 
 /**
@@ -18,6 +18,16 @@ function area(): chrome.storage.LocalStorageArea {
   return chrome.storage.local;
 }
 
+// Older versions saved every rule was saved as fetch/XHR-only and no UI could change
+// that, so a stored ['xmlhttprequest'] is always the old default: upgrade it so
+// existing rules also cover crossorigin images, fonts, media and scripts.
+function upgradeResourceTypes(rule: CorsRule): CorsRule {
+  const types = rule.resourceTypes;
+  return types?.length === 1 && types[0] === 'xmlhttprequest'
+    ? { ...rule, resourceTypes: [...DEFAULT_RESOURCE_TYPES] }
+    : rule;
+}
+
 export async function loadConfig(): Promise<PersistedConfig> {
   const raw = await area().get([
     STORAGE_KEYS.enabled,
@@ -28,7 +38,7 @@ export async function loadConfig(): Promise<PersistedConfig> {
   ]);
   return {
     enabled: Boolean(raw[STORAGE_KEYS.enabled]),
-    rules: (raw[STORAGE_KEYS.rules] as CorsRule[]) ?? [],
+    rules: ((raw[STORAGE_KEYS.rules] as CorsRule[]) ?? []).map(upgradeResourceTypes),
     settings: {
       ...DEFAULT_SETTINGS,
       ...((raw[STORAGE_KEYS.settings] as Partial<CorsSettings>) ?? {}),

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { loadConfig } from '@/shared/storage';
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/shared/constants';
+import { DEFAULT_RESOURCE_TYPES, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/shared/constants';
 
 function stored(settings?: Record<string, unknown>): void {
   const get = chrome.storage.local.get as unknown as ReturnType<typeof vi.fn>;
@@ -37,5 +37,25 @@ describe('loadConfig settings merge', () => {
   it('keeps stored globalInitiatorDomains', async () => {
     stored({ globalInitiatorDomains: ['localhost'] });
     expect((await loadConfig()).settings.globalInitiatorDomains).toEqual(['localhost']);
+  });
+});
+
+describe('loadConfig rule upgrade', () => {
+  function storedRules(rules: unknown[]): void {
+    const get = chrome.storage.local.get as unknown as ReturnType<typeof vi.fn>;
+    get.mockResolvedValueOnce({ [STORAGE_KEYS.rules]: rules });
+  }
+
+  it('upgrades a rule saved with the old fetch/XHR-only default', async () => {
+    storedRules([{ id: 'a', resourceTypes: ['xmlhttprequest'] }]);
+    const { rules } = await loadConfig();
+    expect(rules[0]?.resourceTypes).toEqual(DEFAULT_RESOURCE_TYPES);
+  });
+
+  it('leaves any other resource type list unchanged', async () => {
+    storedRules([{ id: 'b', resourceTypes: ['xmlhttprequest', 'image'] }, { id: 'c' }]);
+    const { rules } = await loadConfig();
+    expect(rules[0]?.resourceTypes).toEqual(['xmlhttprequest', 'image']);
+    expect(rules[1]?.resourceTypes).toBeUndefined();
   });
 });
