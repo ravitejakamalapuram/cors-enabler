@@ -1,5 +1,11 @@
 import { resolveOriginContext } from '@/engine/cors-validator';
-import { isLocalhost, urlMatchesAny } from '@/engine/domain-matcher';
+import { DEFAULT_RESOURCE_TYPES } from '@/shared/constants';
+import {
+  isLocalhost,
+  normalizeInitiatorDomains,
+  normalizeOrigin,
+  urlMatchesAny,
+} from '@/engine/domain-matcher';
 import type {
   CorsRule,
   CorsSettings,
@@ -30,12 +36,28 @@ export class DiagnosticsEngine {
     const method = (input.method ?? 'GET').toUpperCase();
     const isPreflight = method === 'OPTIONS';
     const withCredentials = Boolean(input.withCredentials);
+    const pageOrigin = input.origin ? normalizeOrigin(input.origin) : null;
+    const pageHost = pageOrigin ? (normalizeInitiatorDomains([pageOrigin])[0] ?? null) : null;
 
-    const matchedRule =
-      rules.find(
+    // DNR applies every matching modifyHeaders rule in descending priority, so
+    // the highest-priority match decides each "set" header. Mirror that here.
+    const matches = rules
+      .filter(
         (r) =>
-          r.enabled && (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
-      ) ?? null;
+          r.enabled &&
+          // Diagnostics models fetch/XHR; DNR skips rules limited to other types.
+          (r.resourceTypes ?? DEFAULT_RESOURCE_TYPES).includes('xmlhttprequest') &&
+          initiatorAllows(r.initiatorDomains, pageHost) &&
+          (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
+      )
+      .sort((a, b) => effectivePriority(b) - effectivePriority(a));
+    const matchedRule = matches[0] ?? null;
+    // Chrome does not define which of two same-priority rules wins.
+    const tied = matchedRule
+      ? matches.filter((r) => effectivePriority(r) === effectivePriority(matchedRule))
+      : [];
+    const globalApplies = initiatorAllows(settings.globalInitiatorDomains, pageHost);
+    const noRuleApplies = !matchedRule && !globalApplies;
 
     // Engine state.
     checks.push({
@@ -47,20 +69,53 @@ export class DiagnosticsEngine {
     // Rule match.
     checks.push({
       label: 'Extension rule matched',
-      status: matchedRule ? 'ok' : 'warn',
+      status: matchedRule ? 'ok' : noRuleApplies ? 'fail' : 'warn',
       detail: matchedRule
         ? `Matched rule "${matchedRule.name}".`
-        : 'No specific rule matched — the global rule (if enabled) applies.',
+        : noRuleApplies
+          ? `No rule applies to requests from ${pageOrigin}: the global rule is limited to ${settings.globalInitiatorDomains.join(', ')}. Add this page's host to the global rule or create a rule for it.`
+          : 'No specific rule matched — the global rule (if enabled) applies.',
     });
 
-    // Response modification.
+    if (tied.length > 1) {
+      checks.push({
+        label: 'Conflicting rules',
+        status: 'warn',
+        detail: `${tied.map((r) => `"${r.name}"`).join(', ')} all match this URL at priority ${effectivePriority(tied[0] as CorsRule)}. Chrome does not define which one sets the headers. Give one rule a higher priority or narrow its domains.`,
+      });
+    }
+
+    // Response modification. This is configuration only: nothing here has
+    // observed a real response, so it must never read as confirmed.
     checks.push({
-      label: 'Response header modification',
-      status: enabled ? 'ok' : 'fail',
+      label: 'Response header rules configured',
+      status: enabled ? 'info' : 'fail',
       detail: enabled
-        ? 'Access-Control-* response headers are being set via declarativeNetRequest.'
+        ? 'Rules that set Access-Control-* headers are installed. This simulation cannot confirm they reached a real response; check the response headers in DevTools.'
         : 'Not modifying responses while disabled.',
     });
+
+    // Origin mismatch: the browser compares Allow-Origin to the page origin as an
+    // exact string. Skipped on a tie, where the emitted origin is undefined.
+    const emitted = matchedRule
+      ? resolveOriginContext(matchedRule, settings).origin
+      : settings.credentialsMode
+        ? settings.credentialedOrigin
+        : '*';
+    if (!pageOrigin) {
+      checks.push({
+        label: 'Page origin not provided',
+        status: 'info',
+        detail:
+          'Without the page origin, Access-Control-Allow-Origin and initiator scope were not checked.',
+      });
+    } else if (!noRuleApplies && tied.length < 2 && emitted !== '*' && emitted !== pageOrigin) {
+      checks.push({
+        label: 'Origin mismatch',
+        status: 'fail',
+        detail: `The extension sends Access-Control-Allow-Origin: ${emitted}, but the page origin is ${pageOrigin}. The browser compares them as exact strings. Set the rule's allowed origin to ${pageOrigin}.`,
+      });
+    }
 
     // Preflight.
     if (isPreflight || !SIMPLE_METHODS.has(method) || this.hasNonSimpleHeaders(input)) {
@@ -136,7 +191,7 @@ export class DiagnosticsEngine {
       ? 'This request cannot be fully handled with the current configuration. See failing checks.'
       : hasWarn
         ? 'This request is supported with caveats. Review the warnings and limitations.'
-        : 'This request should succeed — the extension supplies the required CORS response headers.';
+        : 'No problems found in the configuration for this request. This is a simulation, not an observed request; confirm the response headers in DevTools.';
 
     return { request: input, matchedRule, isPreflight, checks, verdict, summary, limitations };
   }
@@ -163,4 +218,19 @@ export class DiagnosticsEngine {
     this.activity = [];
     return [];
   }
+}
+
+/** The DNR priority a rule is installed with (see network-adapter buildDnrRules). */
+function effectivePriority(rule: CorsRule): number {
+  return rule.priority ?? (rule.mode === 'global' ? 1 : 2);
+}
+
+/**
+ * DNR `initiatorDomains` semantics: an empty list matches any page; otherwise
+ * the page host must equal an entry or be a subdomain of one. An unknown page
+ * is assumed to match, and the caller reports that it was not checked.
+ */
+function initiatorAllows(domains: string[] | undefined, pageHost: string | null): boolean {
+  if (!domains?.length || !pageHost) return true;
+  return domains.some((d) => pageHost === d || pageHost.endsWith(`.${d}`));
 }

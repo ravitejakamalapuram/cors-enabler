@@ -200,8 +200,6 @@ export class CorsEngine implements NetworkExtensionEngine {
       ruleCount: this._rules.filter((r) => r.enabled).length,
       installedRuleIds: this._installedIds,
       protectedDomains: domains.size,
-      requestModification: this._enabled, // preflight (OPTIONS) responses are covered
-      responseModification: this._enabled,
       credentialsMode: this._settings.credentialsMode,
       developerMode: this._settings.developerMode,
       lastError: this._lastError,
