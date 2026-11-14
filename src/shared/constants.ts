@@ -42,7 +42,29 @@ export const DEFAULT_ALLOW_HEADERS = [
   'X-Api-Key',
 ];
 
-export const DEFAULT_RESOURCE_TYPES: ResourceType[] = ['xmlhttprequest'];
+// Images, fonts, media and (module) scripts are fetched in CORS mode when marked
+// `crossorigin`, so they fail the same way fetch/XHR does.
+export const DEFAULT_RESOURCE_TYPES: ResourceType[] = [
+  'xmlhttprequest',
+  'image',
+  'font',
+  'media',
+  'script',
+];
+
+// `Access-Control-Expose-Headers: *` is a literal name once credentials are on,
+// so a credentialed rule exposes this fixed list unless the rule names its own.
+export const DEFAULT_EXPOSE_HEADERS = [
+  'Content-Length',
+  'Content-Disposition',
+  'Content-Range',
+  'ETag',
+  'Link',
+  'Location',
+  'Retry-After',
+  'X-Request-Id',
+  'X-Total-Count',
+];
 
 /** Common local development origins auto-covered by presets. */
 export const COMMON_DEV_ORIGINS = [
@@ -57,7 +79,8 @@ export const COMMON_DEV_ORIGINS = [
 export const DEFAULT_SETTINGS: CorsSettings = {
   credentialsMode: false,
   credentialedOrigin: 'http://localhost:3000',
-  allowPrivateNetwork: true,
+  allowPrivateNetwork: false,
+  globalInitiatorDomains: [],
   developerMode: false,
   logLevel: 'info',
   captureNetworkActivity: true,

@@ -39,6 +39,8 @@ export interface CorsRule {
   mode: RuleMode;
   /** Hostnames / host:port / wildcard patterns this rule applies to. Empty = all. */
   requestDomains?: string[];
+  /** Bare hostnames of the pages whose requests this rule applies to. Empty = any page. */
+  initiatorDomains?: string[];
   resourceTypes?: ResourceType[];
   /** Allowed origins. First entry is used for the ACAO header (Chrome cannot echo dynamically). */
   allowedOrigins?: string[];
@@ -64,6 +66,8 @@ export interface CorsSettings {
   credentialedOrigin: string;
   /** Emit Access-Control-Allow-Private-Network:true (localhost/PNA scenarios). */
   allowPrivateNetwork: boolean;
+  /** Bare hostnames of the pages the global rule applies to. Empty = requests from any page. */
+  globalInitiatorDomains: string[];
   developerMode: boolean;
   logLevel: LogLevel;
   captureNetworkActivity: boolean;

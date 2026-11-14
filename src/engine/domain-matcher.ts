@@ -65,6 +65,29 @@ export function domainToUrlFilter(pattern: string): string {
   return `||${hostPort}^`;
 }
 
+/** Reduce a URL / host:port / "Example.com." to a bare lowercase hostname ('' if nothing is left). */
+function toInitiatorHost(entry: string): string {
+  return extractHostPort(entry).replace(/:\d*$/, '').replace(/\.+$/, '').toLowerCase();
+}
+
+/** True for a bare hostname or IPv4 address, the form DNR `initiatorDomains` accepts. */
+export function isValidInitiatorHost(host: string): boolean {
+  return (
+    host.length <= 253 &&
+    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(host)
+  );
+}
+
+/** Bare lowercase hostnames, de-duplicated, blanks dropped. Tolerates a missing or malformed list. */
+export function normalizeInitiatorDomains(domains: unknown): string[] {
+  if (!Array.isArray(domains)) return [];
+  const hosts = domains
+    .filter((d): d is string => typeof d === 'string')
+    .map(toInitiatorHost)
+    .filter(Boolean);
+  return [...new Set(hosts)];
+}
+
 /** True if `url` matches any of the given host/host:port patterns. */
 export function urlMatchesAny(url: string, patterns: string[]): boolean {
   const target = normalizeOrigin(url);

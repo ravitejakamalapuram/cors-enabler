@@ -1,4 +1,9 @@
-import { isValidDomainPattern, isValidOrigin } from '@/engine/domain-matcher';
+import {
+  isValidDomainPattern,
+  isValidInitiatorHost,
+  isValidOrigin,
+  normalizeInitiatorDomains,
+} from '@/engine/domain-matcher';
 import type { CorsRule, CorsSettings, EngineError, ValidationResult } from '@/engine/types';
 
 function err(
@@ -8,6 +13,19 @@ function err(
   recoverable = true,
 ): EngineError {
   return { code, message, userMessage, recoverable };
+}
+
+/** Initiator domains must be bare hostnames: DNR rejects anything else when installing. */
+function validateInitiatorDomains(domains: string[] | undefined): EngineError[] {
+  return normalizeInitiatorDomains(domains)
+    .filter((h) => !isValidInitiatorHost(h))
+    .map((h) =>
+      err(
+        'INVALID_DOMAIN',
+        `Invalid initiator domain: ${h}`,
+        `"${h}" is not a valid initiator hostname. Use a bare hostname such as localhost or app.example.com (no scheme, port, path or wildcard).`,
+      ),
+    );
 }
 
 /** Resolve the effective ACAO value / credentials flag for a rule + settings. */
@@ -90,12 +108,20 @@ export function validateRule(rule: CorsRule, settings: CorsSettings): Validation
     }
   }
 
+  errors.push(...validateInitiatorDomains(rule.initiatorDomains));
+
+  return { valid: errors.length === 0, errors };
+}
+
+/** Validate the settings that feed the synthetic global rule. */
+export function validateSettings(settings: CorsSettings): ValidationResult {
+  const errors = validateInitiatorDomains(settings.globalInitiatorDomains);
   return { valid: errors.length === 0, errors };
 }
 
 /** Validate a full rule set; returns the first blocking error set found. */
 export function validateRules(rules: CorsRule[], settings: CorsSettings): ValidationResult {
-  const errors: EngineError[] = [];
+  const errors: EngineError[] = [...validateSettings(settings).errors];
   for (const rule of rules) {
     if (!rule.enabled) continue;
     const res = validateRule(rule, settings);
