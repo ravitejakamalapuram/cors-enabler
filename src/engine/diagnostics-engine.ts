@@ -1,6 +1,11 @@
 import { resolveOriginContext } from '@/engine/cors-validator';
 import { DEFAULT_RESOURCE_TYPES } from '@/shared/constants';
-import { isLocalhost, normalizeOrigin, urlMatchesAny } from '@/engine/domain-matcher';
+import {
+  isLocalhost,
+  normalizeInitiatorDomains,
+  normalizeOrigin,
+  urlMatchesAny,
+} from '@/engine/domain-matcher';
 import type {
   CorsRule,
   CorsSettings,
@@ -31,6 +36,8 @@ export class DiagnosticsEngine {
     const method = (input.method ?? 'GET').toUpperCase();
     const isPreflight = method === 'OPTIONS';
     const withCredentials = Boolean(input.withCredentials);
+    const pageOrigin = input.origin ? normalizeOrigin(input.origin) : null;
+    const pageHost = pageOrigin ? (normalizeInitiatorDomains([pageOrigin])[0] ?? null) : null;
 
     // DNR applies every matching modifyHeaders rule in descending priority, so
     // the highest-priority match decides each "set" header. Mirror that here.
@@ -40,6 +47,7 @@ export class DiagnosticsEngine {
           r.enabled &&
           // Diagnostics models fetch/XHR; DNR skips rules limited to other types.
           (r.resourceTypes ?? DEFAULT_RESOURCE_TYPES).includes('xmlhttprequest') &&
+          initiatorAllows(r.initiatorDomains, pageHost) &&
           (!r.requestDomains?.length || urlMatchesAny(input.url, r.requestDomains)),
       )
       .sort((a, b) => effectivePriority(b) - effectivePriority(a));
@@ -48,6 +56,8 @@ export class DiagnosticsEngine {
     const tied = matchedRule
       ? matches.filter((r) => effectivePriority(r) === effectivePriority(matchedRule))
       : [];
+    const globalApplies = initiatorAllows(settings.globalInitiatorDomains, pageHost);
+    const noRuleApplies = !matchedRule && !globalApplies;
 
     // Engine state.
     checks.push({
@@ -59,10 +69,12 @@ export class DiagnosticsEngine {
     // Rule match.
     checks.push({
       label: 'Extension rule matched',
-      status: matchedRule ? 'ok' : 'warn',
+      status: matchedRule ? 'ok' : noRuleApplies ? 'fail' : 'warn',
       detail: matchedRule
         ? `Matched rule "${matchedRule.name}".`
-        : 'No specific rule matched — the global rule (if enabled) applies.',
+        : noRuleApplies
+          ? `No rule applies to requests from ${pageOrigin}: the global rule is limited to ${settings.globalInitiatorDomains.join(', ')}. Add this page's host to the global rule or create a rule for it.`
+          : 'No specific rule matched — the global rule (if enabled) applies.',
     });
 
     if (tied.length > 1) {
@@ -90,8 +102,14 @@ export class DiagnosticsEngine {
       : settings.credentialsMode
         ? settings.credentialedOrigin
         : '*';
-    const pageOrigin = input.origin ? normalizeOrigin(input.origin) : null;
-    if (tied.length < 2 && pageOrigin && emitted !== '*' && emitted !== pageOrigin) {
+    if (!pageOrigin) {
+      checks.push({
+        label: 'Page origin not provided',
+        status: 'info',
+        detail:
+          'Without the page origin, Access-Control-Allow-Origin and initiator scope were not checked.',
+      });
+    } else if (!noRuleApplies && tied.length < 2 && emitted !== '*' && emitted !== pageOrigin) {
       checks.push({
         label: 'Origin mismatch',
         status: 'fail',
@@ -205,4 +223,14 @@ export class DiagnosticsEngine {
 /** The DNR priority a rule is installed with (see network-adapter buildDnrRules). */
 function effectivePriority(rule: CorsRule): number {
   return rule.priority ?? (rule.mode === 'global' ? 1 : 2);
+}
+
+/**
+ * DNR `initiatorDomains` semantics: an empty list matches any page; otherwise
+ * the page host must equal an entry or be a subdomain of one. An unknown page
+ * is assumed to match, and the caller reports that it was not checked.
+ */
+function initiatorAllows(domains: string[] | undefined, pageHost: string | null): boolean {
+  if (!domains?.length || !pageHost) return true;
+  return domains.some((d) => pageHost === d || pageHost.endsWith(`.${d}`));
 }

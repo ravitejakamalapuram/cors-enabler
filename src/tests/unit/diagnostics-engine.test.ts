@@ -89,3 +89,36 @@ describe('DiagnosticsEngine.diagnose', () => {
     expect(res.summary).not.toMatch(/should succeed/i);
   });
 });
+
+describe('DiagnosticsEngine initiator scope', () => {
+  const page = 'http://localhost:5173';
+
+  it('fails when the global rule is scoped to other pages and no rule matches', () => {
+    const settings = { ...DEFAULT_SETTINGS, globalInitiatorDomains: ['app.example.com'] };
+    const res = engine.diagnose({ url, origin: page }, [], settings, true);
+    expect(res.checks.find((c) => c.label === 'Extension rule matched')?.status).toBe('fail');
+    expect(res.verdict).toBe('unsupported');
+  });
+
+  it('ignores a rule scoped to another initiator', () => {
+    const r = rule({ initiatorDomains: ['app.example.com'] });
+    const res = engine.diagnose({ url, origin: page }, [r], DEFAULT_SETTINGS, true);
+    expect(res.matchedRule).toBeNull();
+  });
+
+  it('matches a rule scoped to the page host or a parent domain', () => {
+    const r = rule({ initiatorDomains: ['example.com'] });
+    const res = engine.diagnose(
+      { url, origin: 'https://app.example.com' },
+      [r],
+      DEFAULT_SETTINGS,
+      true,
+    );
+    expect(res.matchedRule?.id).toBe('r1');
+  });
+
+  it('says the origin was not checked when none is given', () => {
+    const res = engine.diagnose({ url }, [rule({})], DEFAULT_SETTINGS, true);
+    expect(res.checks.find((c) => c.label === 'Page origin not provided')?.status).toBe('info');
+  });
+});
