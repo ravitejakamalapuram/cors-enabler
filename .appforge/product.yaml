@@ -1,5 +1,5 @@
 # Backfilled by the AppForge factory (P1-07). Fields marked null are not yet knowable —
-# they depend on infrastructure (appforge-control, appforge-edge, Paperclip) not built yet.
+# they depend on infrastructure (appforge-control, appforge-edge) not built yet.
 product_id: cors-enabler
 name: CORS Enabler
 description: "Relax CORS for local web development using DeclarativeNetRequest. A network rule engine with diagnostics for web APIs."
