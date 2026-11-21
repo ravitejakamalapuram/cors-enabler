@@ -61,13 +61,21 @@ function mount(): HTMLElement {
   return el;
 }
 
+let orphanTimer: ReturnType<typeof setInterval> | undefined;
+
 function render(show: boolean): void {
   if (show && !dismissed && !host) {
     host = mount();
     document.documentElement.append(host);
+    // A local property check, no messaging: removes the pill within a few
+    // seconds of an extension reload or update, which stops our pushes.
+    orphanTimer = setInterval(() => {
+      if (orphaned()) render(false);
+    }, 3000);
   } else if (!(show && !dismissed) && host) {
     host.remove();
     host = null;
+    clearInterval(orphanTimer);
   }
 }
 
@@ -89,8 +97,5 @@ async function init(): Promise<void> {
 chrome.runtime.onMessage.addListener((message: unknown, sender) => {
   const m = message as Partial<IndicatorUpdateMessage> | null;
   if (sender.id === chrome.runtime.id && m?.type === INDICATOR_UPDATE) render(m.show === true);
-});
-document.addEventListener('visibilitychange', () => {
-  if (orphaned()) render(false);
 });
 void init();
