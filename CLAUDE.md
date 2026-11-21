@@ -41,6 +41,7 @@ Rules that matter when changing code:
 - `CorsEngine` serializes all mutating operations through one promise queue, and every install is remove-stale -> add -> re-read-and-verify; `getStatus()` reconciles cached state against `getDynamicRules()`. Preserve both properties.
 - State transitions go through the explicit machine in `state-manager.ts` (pure `nextState`), not ad-hoc flags.
 - The service worker re-installs rules on `onInstalled`/`onStartup`, since dynamic rules and in-memory state must survive SW restarts.
+- The toolbar badge (`background/badge.ts`) follows the persisted `enabled` flag via `chrome.storage.onChanged` and is re-applied on every SW start, because Chrome clears badge text on browser restart. The engine saves `enabled` only after install/clear succeeds, so the badge never shows ON for a failed enable.
 
 Rule model -> DNR (`network-adapter.buildDnrRules`): a global rule (no domains) becomes one DNR rule matching `DEFAULT_RESOURCE_TYPES` (`xmlhttprequest`, `image`, `font`, `media`, `script`) at priority 1 (only `xmlhttprequest` while credentials mode is on and no initiators are set), restricted to `settings.globalInitiatorDomains` when that list is non-empty (a rule's own `initiatorDomains` does the same for domain rules; engine-only for now, no UI); a domain rule becomes one DNR rule per domain using `urlFilter` (so ports work, which `requestDomains` cannot express) at priority >= 2 so specific rules beat the global one. DNR ids live in `DNR_RULE_ID_BASE..DNR_RULE_ID_MAX` (`shared/constants.ts`).
 

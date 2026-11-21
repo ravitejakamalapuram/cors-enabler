@@ -75,6 +75,27 @@ test('enabled — GET, POST(JSON) and Authorization requests succeed', async () 
   await app.close();
 });
 
+test('toolbar badge shows ON while enabled and clears when disabled', async () => {
+  const sw = await serviceWorker(context);
+  const badge = (): Promise<string> => sw.evaluate(() => chrome.action.getBadgeText({}));
+  await setEngine(true);
+  await expect.poll(badge).toBe('ON');
+  await setEngine(false);
+  await expect.poll(badge).toBe('');
+});
+
+test('popup shows a dismissible pin tip while the extension is unpinned', async () => {
+  const p = await context.newPage();
+  await p.goto(`chrome-extension://${extId}/index.html`);
+  await expect(p.getByTestId('pin-tip')).toBeVisible();
+  await p.getByTestId('dismiss-pin-tip').click();
+  await expect(p.getByTestId('pin-tip')).toBeHidden();
+  await p.reload();
+  await expect(p.getByTestId('popup-root')).toBeVisible();
+  await expect(p.getByTestId('pin-tip')).toHaveCount(0);
+  await p.close();
+});
+
 test('credentialed request requires credentials mode (honest limitation)', async () => {
   await setEngine(true);
 

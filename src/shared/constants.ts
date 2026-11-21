@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   settings: 'cors_settings',
   state: 'cors_state',
   lastError: 'cors_last_error',
+  pinTipDismissed: 'cors_pin_tip_dismissed',
 } as const;
 
 /**
