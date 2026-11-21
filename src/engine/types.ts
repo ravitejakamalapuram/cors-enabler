@@ -71,6 +71,8 @@ export interface CorsSettings {
   developerMode: boolean;
   logLevel: LogLevel;
   captureNetworkActivity: boolean;
+  /** Show a small "CORS ON" pill on web pages while the extension is enabled. */
+  showPageIndicator: boolean;
   maxActivityEntries: number;
 }
 

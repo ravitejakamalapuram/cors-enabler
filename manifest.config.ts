@@ -44,6 +44,16 @@ export default defineManifest({
     type: 'module',
   },
   options_page: 'options.html',
+  // Top-frame only "CORS ON" pill (src/content/page-indicator.ts). Covered by
+  // the existing <all_urls> host permission; it only asks the service worker
+  // whether to show (CORS_INDICATOR_STATE) and never reads page content.
+  content_scripts: [
+    {
+      matches: ['<all_urls>'],
+      js: ['src/content/page-indicator.ts'],
+      run_at: 'document_idle',
+    },
+  ],
   icons: {
     '16': 'icons/icon-16.png',
     '48': 'icons/icon-48.png',

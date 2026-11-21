@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   settings: 'cors_settings',
   state: 'cors_state',
   lastError: 'cors_last_error',
+  pinTipDismissed: 'cors_pin_tip_dismissed',
 } as const;
 
 /**
@@ -84,6 +85,7 @@ export const DEFAULT_SETTINGS: CorsSettings = {
   developerMode: false,
   logLevel: 'info',
   captureNetworkActivity: true,
+  showPageIndicator: true,
   maxActivityEntries: 200,
 };
 

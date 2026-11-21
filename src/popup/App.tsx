@@ -1,7 +1,36 @@
-import { Settings, Power, Loader2, ShieldCheck, Activity } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Settings, Power, Loader2, ShieldCheck, Activity, Pin, X } from 'lucide-react';
 import { useEngine } from './hooks/useEngine';
 import { Check } from '@/ui/components/Check';
 import type { CorsStatus } from '@/engine/types';
+import { STORAGE_KEYS } from '@/shared/constants';
+
+/**
+ * The ON badge is only visible when the extension is pinned to the toolbar,
+ * and Chrome does not let an extension pin itself. Show a one-time,
+ * dismissible tip while it is unpinned.
+ */
+function usePinTip(): { show: boolean; dismiss: () => void } {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [settings, stored] = await Promise.all([
+          chrome.action.getUserSettings(),
+          chrome.storage.local.get(STORAGE_KEYS.pinTipDismissed),
+        ]);
+        setShow(!settings.isOnToolbar && !stored[STORAGE_KEYS.pinTipDismissed]);
+      } catch {
+        // If either call fails, skip the tip rather than break the popup.
+      }
+    })();
+  }, []);
+  const dismiss = (): void => {
+    setShow(false);
+    void chrome.storage.local.set({ [STORAGE_KEYS.pinTipDismissed]: true });
+  };
+  return { show, dismiss };
+}
 
 function openOptions(hash?: string): void {
   if (hash) {
@@ -32,6 +61,7 @@ export default function App(): React.JSX.Element {
   const enabled = status?.enabled ?? false;
   const hero = heroLabel(status);
   const transitioning = status?.state === 'ENABLING' || status?.state === 'DISABLING';
+  const pinTip = usePinTip();
 
   return (
     <div className="popup" data-testid="popup-root">
@@ -72,6 +102,31 @@ export default function App(): React.JSX.Element {
           {enabled ? 'Disable CORS' : 'Enable CORS'}
         </button>
       </div>
+
+      {pinTip.show ? (
+        <div className="section">
+          <div
+            className="banner banner-info"
+            data-testid="pin-tip"
+            style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}
+          >
+            <Pin size={14} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1 }}>
+              Pin CORS Enabler so you can always see when it&apos;s on. Click the puzzle icon in the
+              toolbar, then the pin next to CORS Enabler. An orange <strong>ON</strong> badge shows
+              while CORS is enabled.
+            </div>
+            <button
+              className="icon-btn"
+              onClick={pinTip.dismiss}
+              aria-label="Dismiss pin tip"
+              data-testid="dismiss-pin-tip"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <div className="section">

@@ -10,7 +10,16 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
-  plugins: [react(), crx({ manifest })],
+  plugins: [
+    react(),
+    crx({
+      manifest,
+      // Build the page indicator as a self-contained IIFE. The default loader
+      // would list its chunks in web_accessible_resources for <all_urls>,
+      // which lets any website detect the extension.
+      contentScripts: { standaloneFiles: ['src/content/page-indicator.ts'] },
+    }),
+  ],
   server: {
     cors: {
       origin: [/chrome-extension:\/\//],
