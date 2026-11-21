@@ -31,7 +31,10 @@ servers.
 - `declarativeNetRequestFeedback` — shows which rules matched, for diagnostics.
 - `storage` — keeps enabled rules and settings locally on the device.
 - Host access (`<all_urls>`) — required by Chrome to modify response headers
-  for the development APIs the user chooses to target.
+  for the development APIs the user chooses to target. It also lets the
+  extension show a small "CORS ON" indicator on pages while it is enabled
+  (it can be turned off in Settings). That indicator reads only the extension's
+  own on/off flag and settings. It does not read, store or send page content.
 
 ## Contact
 

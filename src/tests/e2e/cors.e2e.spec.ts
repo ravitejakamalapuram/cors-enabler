@@ -96,6 +96,32 @@ test('popup shows a dismissible pin tip while the extension is unpinned', async 
   await p.close();
 });
 
+test('page shows a CORS ON pill only while enabled, and the setting hides it', async () => {
+  const pill = (p: import('@playwright/test').Page) => p.locator('cors-enabler-indicator');
+  await setEngine(true);
+  const app = await context.newPage();
+  await app.goto(APP);
+  await expect(pill(app)).toHaveCount(1);
+
+  await setEngine(false);
+  await expect(pill(app)).toHaveCount(0);
+
+  await setEngine(true);
+  await expect(pill(app)).toHaveCount(1);
+  const opt = await openOptions();
+  await opt.getByTestId('nav-settings').click();
+  const sw = opt.getByTestId('set-page-indicator-switch');
+  await expect(sw).toBeChecked();
+  await sw.locator('xpath=..').click();
+  await expect(sw).not.toBeChecked();
+  await expect(pill(app)).toHaveCount(0);
+  await sw.locator('xpath=..').click();
+  await expect(sw).toBeChecked();
+  await opt.close();
+  await expect(pill(app)).toHaveCount(1);
+  await app.close();
+});
+
 test('credentialed request requires credentials mode (honest limitation)', async () => {
   await setEngine(true);
 

@@ -85,6 +85,7 @@ export const DEFAULT_SETTINGS: CorsSettings = {
   developerMode: false,
   logLevel: 'info',
   captureNetworkActivity: true,
+  showPageIndicator: true,
   maxActivityEntries: 200,
 };
 

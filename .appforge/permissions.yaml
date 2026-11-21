@@ -17,6 +17,6 @@ permissions:
     security_impact: low
   - permission: "<all_urls>"
     required: true
-    reason: "The CORS-relax rule engine is domain-agnostic by design: it needs host access to whichever API domain a rule targets, which is not known in advance"
+    reason: "The CORS-relax rule engine is domain-agnostic by design: it needs host access to whichever API domain a rule targets, which is not known in advance. The same host access runs a small top-frame content script that shows a 'CORS ON' pill while the extension is enabled (can be turned off in Settings); it reads only the extension's own enabled flag and settings, never page content"
     data_access: [any_site_response_headers]
     security_impact: high

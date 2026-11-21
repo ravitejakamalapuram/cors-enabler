@@ -181,6 +181,23 @@ export function SettingsPanel({ ctrl }: { ctrl: OptionsController }): React.JSX.
             testid="set-capture-switch"
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>
+              Show &quot;CORS ON&quot; on web pages
+            </div>
+            <div className="desc">
+              A small pill in the corner of each page while CORS is on, so you don&apos;t forget to
+              turn it off. You can also hide it on a single page with its × button.
+            </div>
+          </div>
+          <Switch
+            checked={s.showPageIndicator}
+            onChange={(v) => ctrl.updateSettings({ showPageIndicator: v })}
+            label="Show page indicator"
+            testid="set-page-indicator-switch"
+          />
+        </div>
       </div>
 
       <div className="card card-pad">
