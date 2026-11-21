@@ -21,7 +21,7 @@ function usePinTip(): { show: boolean; dismiss: () => void } {
         ]);
         setShow(!settings.isOnToolbar && !stored[STORAGE_KEYS.pinTipDismissed]);
       } catch {
-        // getUserSettings is unavailable on very old Chrome builds; skip the tip.
+        // If either call fails, skip the tip rather than break the popup.
       }
     })();
   }, []);

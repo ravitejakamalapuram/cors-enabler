@@ -188,7 +188,8 @@ export function SettingsPanel({ ctrl }: { ctrl: OptionsController }): React.JSX.
             </div>
             <div className="desc">
               A small pill in the corner of each page while CORS is on, so you don&apos;t forget to
-              turn it off. You can also hide it on a single page with its × button.
+              turn it off. Hide it on one page with its × button. While shown, sites can tell the
+              extension is on.
             </div>
           </div>
           <Switch

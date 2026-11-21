@@ -1,6 +1,19 @@
 import type { CorsEngine } from '@/engine/cors-engine';
 import type { ExtensionMessage, MessageEnvelope } from '@/shared/messages';
 import type { EngineError } from '@/engine/types';
+import { indicatorView } from '@/shared/indicator';
+
+/**
+ * Web pages run our content script, so messages can arrive from page
+ * renderers. Those may only ask for the indicator state; everything that
+ * reads or changes config must come from an extension page.
+ */
+export function isAllowedFromSender(
+  type: ExtensionMessage['type'],
+  fromExtensionPage: boolean,
+): boolean {
+  return fromExtensionPage || type === 'CORS_INDICATOR_STATE';
+}
 
 function toError(e: unknown): EngineError {
   if (e && typeof e === 'object' && 'code' in e && 'userMessage' in e) return e as EngineError;
@@ -68,6 +81,10 @@ async function dispatch(engine: CorsEngine, message: ExtensionMessage): Promise<
       return engine.exportConfig();
     case 'CORS_IMPORT_CONFIG':
       return engine.importConfig(message.payload);
+    case 'CORS_INDICATOR_STATE': {
+      const [status, settings] = await Promise.all([engine.getStatus(), engine.getSettings()]);
+      return indicatorView({ enabled: status.enabled, state: status.state, settings }).pill;
+    }
     default: {
       const exhaustive: never = message;
       throw {

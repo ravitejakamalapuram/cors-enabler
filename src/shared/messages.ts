@@ -33,7 +33,8 @@ export type ExtensionMessage =
   | { type: 'CORS_NETWORK_ACTIVITY' }
   | { type: 'CORS_CLEAR_ACTIVITY' }
   | { type: 'CORS_EXPORT_CONFIG' }
-  | { type: 'CORS_IMPORT_CONFIG'; payload: ExportedConfig };
+  | { type: 'CORS_IMPORT_CONFIG'; payload: ExportedConfig }
+  | { type: 'CORS_INDICATOR_STATE' };
 
 export type MessageResult<T extends ExtensionMessage['type']> = {
   CORS_ENABLE: CorsStatus;
@@ -54,6 +55,7 @@ export type MessageResult<T extends ExtensionMessage['type']> = {
   CORS_CLEAR_ACTIVITY: NetworkActivityEntry[];
   CORS_EXPORT_CONFIG: ExportedConfig;
   CORS_IMPORT_CONFIG: { rules: CorsRule[]; settings: CorsSettings };
+  CORS_INDICATOR_STATE: boolean;
 }[T];
 
 export interface MessageEnvelope<T> {

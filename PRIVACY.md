@@ -34,7 +34,10 @@ servers.
   for the development APIs the user chooses to target. It also lets the
   extension show a small "CORS ON" indicator on pages while it is enabled
   (it can be turned off in Settings). That indicator reads only the extension's
-  own on/off flag and settings. It does not read, store or send page content.
+  own on/off state from the extension. It does not read, store or send page content.
+  While it is shown, the website you are on can see that the indicator element
+  exists, and so can tell that CORS Enabler is installed and on. Turn the
+  indicator off in Settings if you don't want sites to see that.
 
 ## Contact
 

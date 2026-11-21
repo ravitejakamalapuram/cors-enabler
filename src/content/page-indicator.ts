@@ -1,13 +1,12 @@
-import { STORAGE_KEYS } from '@/shared/constants';
-import { shouldShowIndicator } from '@/content/indicator-state';
+import { INDICATOR_UPDATE, type IndicatorUpdateMessage } from '@/shared/indicator';
 
 /**
  * Small "CORS ON" pill in the corner of every top-level page while CORS
  * Enabler is on, so a forgotten global toggle is visible where the breakage
- * shows up. It only reads the enabled flag and settings from extension
- * storage; it never reads page content or sends anything anywhere. Rendered in
- * a closed shadow root so page CSS cannot restyle it and page scripts cannot
- * reach into it. Dismissal lasts until the page is reloaded.
+ * shows up. It never reads page content and has no access to extension
+ * storage: it asks the service worker for one boolean (CORS_INDICATOR_STATE)
+ * and listens for pushes. Rendered in a closed shadow root so page CSS cannot
+ * restyle it. Dismissal lasts until the page is reloaded.
  */
 const HOST_TAG = 'cors-enabler-indicator';
 let host: HTMLElement | null = null;
@@ -15,8 +14,19 @@ let dismissed = false;
 
 function mount(): HTMLElement {
   const el = document.createElement(HOST_TAG);
-  el.style.cssText =
-    'all: initial; position: fixed; right: 12px; bottom: 12px; z-index: 2147483647;';
+  // Inline !important beats page stylesheets, so a page cannot hide or move it.
+  for (const [prop, value] of [
+    ['all', 'initial'],
+    ['display', 'block'],
+    ['visibility', 'visible'],
+    ['opacity', '1'],
+    ['position', 'fixed'],
+    ['right', '12px'],
+    ['bottom', '12px'],
+    ['z-index', '2147483647'],
+  ] as const) {
+    el.style.setProperty(prop, value, 'important');
+  }
   const root = el.attachShadow({ mode: 'closed' });
 
   const style = document.createElement('style');
@@ -52,26 +62,35 @@ function mount(): HTMLElement {
 }
 
 function render(show: boolean): void {
-  if (show && !host) {
+  if (show && !dismissed && !host) {
     host = mount();
     document.documentElement.append(host);
-  } else if (!show && host) {
+  } else if (!(show && !dismissed) && host) {
     host.remove();
     host = null;
   }
 }
 
-async function refresh(): Promise<void> {
-  const raw = await chrome.storage.local.get([STORAGE_KEYS.enabled, STORAGE_KEYS.settings]);
-  render(!dismissed && shouldShowIndicator(raw));
+/** After an extension reload or update this script is orphaned and gets no more pushes. */
+function orphaned(): boolean {
+  return !chrome.runtime?.id;
 }
 
-void refresh();
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (
-    areaName === 'local' &&
-    (STORAGE_KEYS.enabled in changes || STORAGE_KEYS.settings in changes)
-  ) {
-    void refresh();
+async function init(): Promise<void> {
+  try {
+    const res = (await chrome.runtime.sendMessage({ type: 'CORS_INDICATOR_STATE' })) as
+      { ok?: boolean; data?: unknown } | undefined;
+    render(res?.ok === true && res.data === true);
+  } catch {
+    render(false);
   }
+}
+
+chrome.runtime.onMessage.addListener((message: unknown, sender) => {
+  const m = message as Partial<IndicatorUpdateMessage> | null;
+  if (sender.id === chrome.runtime.id && m?.type === INDICATOR_UPDATE) render(m.show === true);
 });
+document.addEventListener('visibilitychange', () => {
+  if (orphaned()) render(false);
+});
+void init();

@@ -45,8 +45,8 @@ export default defineManifest({
   },
   options_page: 'options.html',
   // Top-frame only "CORS ON" pill (src/content/page-indicator.ts). Covered by
-  // the existing <all_urls> host permission; it reads only the extension's own
-  // enabled flag and settings, never page content.
+  // the existing <all_urls> host permission; it only asks the service worker
+  // whether to show (CORS_INDICATOR_STATE) and never reads page content.
   content_scripts: [
     {
       matches: ['<all_urls>'],

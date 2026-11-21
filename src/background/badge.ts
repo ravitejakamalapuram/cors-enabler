@@ -1,3 +1,5 @@
+import type { BadgeMode } from '@/shared/indicator';
+
 /**
  * Toolbar badge that makes the "CORS is on" state visible without opening the
  * popup. Chrome clears badge text on browser restart, so the service worker
@@ -9,18 +11,27 @@ export interface BadgeView {
   title: string;
 }
 
-export function badgeFor(enabled: boolean): BadgeView {
-  return enabled
-    ? {
+export function badgeFor(mode: BadgeMode): BadgeView {
+  switch (mode) {
+    case 'on':
+      return {
         text: 'ON',
         color: '#d97706',
         title: 'CORS Enabler: ON. CORS headers are being relaxed. Click to turn off.',
-      }
-    : { text: '', color: '#6b7280', title: 'CORS Enabler: off' };
+      };
+    case 'error':
+      return {
+        text: '!',
+        color: '#dc2626',
+        title: 'CORS Enabler: error. Rules could not be installed. Click for details.',
+      };
+    default:
+      return { text: '', color: '#6b7280', title: 'CORS Enabler: off' };
+  }
 }
 
-export async function applyBadge(enabled: boolean): Promise<void> {
-  const view = badgeFor(enabled);
+export async function applyBadge(mode: BadgeMode): Promise<void> {
+  const view = badgeFor(mode);
   await Promise.all([
     chrome.action.setBadgeText({ text: view.text }),
     chrome.action.setBadgeBackgroundColor({ color: view.color }),

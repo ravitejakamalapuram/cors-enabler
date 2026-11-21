@@ -1,10 +1,11 @@
 import { ensureInitialized, getEngine } from '@/engine';
-import { handleMessage } from '@/background/message-handler';
+import { handleMessage, isAllowedFromSender } from '@/background/message-handler';
 import { isExtensionMessage } from '@/shared/messages';
 import { rootLogger } from '@/shared/logger';
 import { loadConfig } from '@/shared/storage';
 import { STORAGE_KEYS } from '@/shared/constants';
 import { applyBadge } from '@/background/badge';
+import { INDICATOR_UPDATE, indicatorView, type IndicatorUpdateMessage } from '@/shared/indicator';
 
 const log = rootLogger.child('ServiceWorker');
 
@@ -12,17 +13,28 @@ const log = rootLogger.child('ServiceWorker');
 // after a service-worker or full Chrome restart (spec §41).
 ensureInitialized().catch((e) => log.error('Init failed', e));
 
-// Keep the toolbar badge in sync with the persisted enabled flag. The engine
-// only saves `enabled` after rules are installed or cleared, so the badge never
-// claims ON for a failed enable. Re-applied on every SW start because Chrome
-// drops badge text on browser restart.
-void loadConfig()
-  .then((c) => applyBadge(c.enabled))
-  .catch((e) => log.error('Badge init failed', e));
+// Keep the toolbar badge and the on-page pill in sync with the persisted
+// engine state (enabled + state + settings). Driving them from state, not just
+// `enabled`, means a failed re-install after restart shows "!" instead of ON.
+// Re-applied on every SW start because Chrome drops badge text on restart.
+async function syncIndicators(): Promise<void> {
+  const config = await loadConfig();
+  const view = indicatorView(config);
+  await applyBadge(view.badge);
+  const update: IndicatorUpdateMessage = { type: INDICATOR_UPDATE, show: view.pill };
+  const tabs = await chrome.tabs.query({});
+  await Promise.all(
+    tabs.map((t) =>
+      // Tabs without our content script (chrome://, store pages) reject; ignore.
+      t.id === undefined ? null : chrome.tabs.sendMessage(t.id, update).catch(() => undefined),
+    ),
+  );
+}
+const INDICATOR_KEYS: string[] = [STORAGE_KEYS.enabled, STORAGE_KEYS.state, STORAGE_KEYS.settings];
+void syncIndicators().catch((e) => log.error('Indicator init failed', e));
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  const change = changes[STORAGE_KEYS.enabled];
-  if (areaName === 'local' && change) {
-    applyBadge(Boolean(change.newValue)).catch((e) => log.error('Badge update failed', e));
+  if (areaName === 'local' && INDICATOR_KEYS.some((k) => k in changes)) {
+    syncIndicators().catch((e) => log.error('Indicator update failed', e));
   }
 });
 
@@ -36,9 +48,13 @@ chrome.runtime.onStartup.addListener(() => {
   void ensureInitialized();
 });
 
-// Typed message bridge for popup/options.
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!isExtensionMessage(message)) {
+// Typed message bridge for popup/options, plus the page indicator's one
+// read-only query. Content scripts run in web page renderers, so their
+// messages (sender origin is the page's) may not read or change config.
+const EXTENSION_ORIGIN = new URL(chrome.runtime.getURL('')).origin;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const fromExtensionPage = sender.id === chrome.runtime.id && sender.origin === EXTENSION_ORIGIN;
+  if (!isExtensionMessage(message) || !isAllowedFromSender(message.type, fromExtensionPage)) {
     sendResponse({
       ok: false,
       error: {
